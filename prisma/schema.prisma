@@ -1,0 +1,243 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+enum UserStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum PollStatus {
+  DRAFT
+  ANCHORING
+  SCHEDULED
+  OPEN
+  CLOSED
+  FINALIZED
+  ARCHIVED
+}
+
+enum TicketStatus {
+  ISSUED
+  LOCKED
+  VOTED
+  EXPIRED
+  REVOKED
+}
+
+enum VoteRequestStatus {
+  ACTIVE
+  USED
+  EXPIRED
+}
+
+enum VoteReceiptStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+  DUPLICATE_IGNORED
+}
+
+enum PollInviteStatus {
+  PENDING
+  SENT
+  OPENED
+  FAILED
+}
+
+enum PollVoterAccessStatus {
+  ACTIVE
+  USED
+  EXPIRED
+  REVOKED
+}
+
+enum VoteOptionLetter {
+  A
+  B
+  C
+  D
+  E
+}
+
+model User {
+  id           String            @id @default(cuid())
+  nick         String            @unique
+  email        String?           @unique
+  passwordHash String
+  role         UserRole
+  status       UserStatus        @default(ACTIVE)
+  createdAt    DateTime          @default(now())
+  polls        Poll[]            @relation("PollCreator")
+  eligibility  PollEligibility[]
+  assignments  TicketAssignment[]
+  invites      PollInvite[]
+}
+
+model Poll {
+  id           String            @id @default(cuid())
+  question     String
+  optionALabel String?
+  optionBLabel String?
+  optionCLabel String?
+  optionDLabel String?
+  optionELabel String?
+  status       PollStatus        @default(DRAFT)
+  anchorTxid   String?
+  anchorHeight Int?
+  questionHash String
+  feeZat       BigInt
+  opensAt      DateTime
+  closesAt     DateTime
+  createdById  String
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  createdBy    User              @relation("PollCreator", fields: [createdById], references: [id])
+  eligibility  PollEligibility[]
+  tickets      VoteTicket[]
+  receipts     VoteReceipt[]
+  assignments  TicketAssignment[]
+  invites      PollInvite[]
+  voterAccesses PollVoterAccess[]
+  tally        PollTally?
+}
+
+model PollEligibility {
+  pollId String
+  userId String
+  poll   Poll @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([pollId, userId])
+}
+
+model VoteTicket {
+  id             String        @id @default(cuid())
+  pollId         String
+  ticketPublicId String        @unique
+  ticketHash     String        @unique
+  status         TicketStatus  @default(ISSUED)
+  lockedOptionLetter VoteOptionLetter?
+  lockedRequestId String?
+  lockedAt       DateTime?
+  issuedAt       DateTime      @default(now())
+  expiresAt      DateTime?
+  poll           Poll          @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  assignment     TicketAssignment?
+  requests       VoteRequest[]
+
+  @@unique([id, pollId])
+}
+
+model TicketAssignment {
+  ticketId           String            @id
+  pollId             String
+  userId             String?
+  pollVoterAccessId  String?
+  ticket             VoteTicket        @relation(fields: [ticketId, pollId], references: [id, pollId], onDelete: Cascade)
+  poll               Poll              @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  user               User?             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pollVoterAccess    PollVoterAccess?  @relation(fields: [pollVoterAccessId], references: [id], onDelete: Cascade)
+
+  @@unique([ticketId, pollId])
+  @@unique([pollId, userId])
+  @@unique([pollId, pollVoterAccessId])
+}
+
+model VoteRequest {
+  id              String            @id @default(cuid())
+  ticketId        String
+  optionLetter    VoteOptionLetter
+  shieldedAddress String            @unique
+  zip321Uri       String
+  status          VoteRequestStatus @default(ACTIVE)
+  ticket          VoteTicket        @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@unique([ticketId, optionLetter])
+}
+
+model VoteReceipt {
+  id              String            @id @default(cuid())
+  pollId          String
+  ticketHash      String
+  receiptPublicId String?           @unique
+  receiptEmailId  String?
+  receiptEmailSentAt DateTime?
+  receiptEmailError String?
+  optionLetter    VoteOptionLetter
+  txid            String
+  blockHeight     Int?
+  amountZat       BigInt
+  memo            String
+  status          VoteReceiptStatus @default(PENDING)
+  rejectionReason String?
+  confirmedAt     DateTime?
+  poll            Poll              @relation(fields: [pollId], references: [id], onDelete: Cascade)
+
+  @@unique([txid, ticketHash])
+}
+
+model PollVoterAccess {
+  id               String                @id @default(cuid())
+  pollId           String
+  nick             String
+  email            String
+  passwordHash     String?
+  status           PollVoterAccessStatus @default(ACTIVE)
+  inviteToken      String                @unique
+  passwordIssuedAt DateTime?
+  lastLoginAt      DateTime?
+  expiresAt        DateTime
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+  poll             Poll                  @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  assignments      TicketAssignment[]
+  invites          PollInvite[]
+
+  @@unique([pollId, nick])
+  @@unique([pollId, email])
+}
+
+model PollInvite {
+  id                 String            @id @default(cuid())
+  pollId             String
+  userId             String?
+  pollVoterAccessId  String?
+  email              String
+  inviteToken        String            @unique
+  status             PollInviteStatus  @default(PENDING)
+  resendEmailId      String?
+  sentAt             DateTime?
+  openedAt           DateTime?
+  lastError          String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  poll               Poll              @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  user               User?             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pollVoterAccess    PollVoterAccess?  @relation(fields: [pollVoterAccessId], references: [id], onDelete: Cascade)
+
+  @@unique([pollId, userId])
+  @@unique([pollId, pollVoterAccessId])
+}
+
+model PollTally {
+  pollId         String   @id
+  countA         Int      @default(0)
+  countB         Int      @default(0)
+  countC         Int      @default(0)
+  countD         Int      @default(0)
+  countE         Int      @default(0)
+  totalConfirmed Int      @default(0)
+  updatedAt      DateTime @updatedAt
+  poll           Poll     @relation(fields: [pollId], references: [id], onDelete: Cascade)
+}

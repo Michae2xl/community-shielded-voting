@@ -1,0 +1,41 @@
+{
+  "name": "community-shielded-voting",
+  "private": false,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "postinstall": "prisma generate",
+    "db:push": "sh -c 'prisma db push ${PRISMA_DB_PUSH_FLAGS:-}'",
+    "db:seed": "tsx prisma/seed.ts",
+    "collector:tally": "tsx scripts/collector-tally.ts",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.7.0",
+    "bcryptjs": "^2.4.3",
+    "jose": "^5.9.6",
+    "next": "^16.0.0",
+    "qrcode": "^1.5.4",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "resend": "^6.12.2",
+    "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@types/node": "^22.15.3",
+    "@types/react": "^19.0.4",
+    "@types/react-dom": "^19.0.2",
+    "eslint": "^9.25.1",
+    "eslint-config-next": "^16.0.0",
+    "jsdom": "^26.1.0",
+    "prisma": "^6.7.0",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.3"
+  }
+}
