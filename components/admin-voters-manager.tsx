@@ -130,7 +130,7 @@ export function AdminVotersManager({
             <textarea
               value={bulkInput}
               onChange={(event) => setBulkInput(event.currentTarget.value)}
-              placeholder={"voter01,voter01@example.com\nalice,alice@example.com"}
+              placeholder={"michae2xl,michaelguima@proton.me\nalice,alice@example.com"}
             />
             <div className="editorial-inline-actions">
               <button

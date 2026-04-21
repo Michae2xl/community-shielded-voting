@@ -4,16 +4,22 @@ const {
   readSessionMock,
   syncPollLifecycleForPollMock,
   reconcilePollVotesMock,
-  syncWalletMock
+  syncWalletMock,
+  creatorOwnsPollMock
 } = vi.hoisted(() => ({
   readSessionMock: vi.fn(),
   syncPollLifecycleForPollMock: vi.fn(),
   reconcilePollVotesMock: vi.fn(),
-  syncWalletMock: vi.fn()
+  syncWalletMock: vi.fn(),
+  creatorOwnsPollMock: vi.fn()
 }));
 
 vi.mock("@/lib/auth/session", () => ({
   readSession: readSessionMock
+}));
+
+vi.mock("@/lib/auth/poll-ownership", () => ({
+  creatorOwnsPoll: creatorOwnsPollMock
 }));
 
 vi.mock("@/lib/services/poll-lifecycle", () => ({
@@ -37,6 +43,7 @@ beforeEach(() => {
   syncPollLifecycleForPollMock.mockReset();
   reconcilePollVotesMock.mockReset();
   syncWalletMock.mockReset();
+  creatorOwnsPollMock.mockReset();
 });
 
 describe("admin reconcile route", () => {
@@ -49,7 +56,10 @@ describe("admin reconcile route", () => {
 
     const response = await POST(
       new Request("http://localhost/api/admin/polls/poll_1/reconcile", {
-        method: "POST"
+        method: "POST",
+        headers: {
+          origin: "http://localhost"
+        }
       }) as never,
       { params: Promise.resolve({ pollId: "poll_1" }) } as never
     );
@@ -63,6 +73,7 @@ describe("admin reconcile route", () => {
       nick: "admin",
       role: "ADMIN"
     });
+    creatorOwnsPollMock.mockResolvedValue(true);
     syncPollLifecycleForPollMock.mockResolvedValue({
       pollId: "poll_1",
       previousStatus: "OPEN",
@@ -76,7 +87,10 @@ describe("admin reconcile route", () => {
 
     const response = await POST(
       new Request("http://localhost/api/admin/polls/poll_1/reconcile", {
-        method: "POST"
+        method: "POST",
+        headers: {
+          origin: "http://localhost"
+        }
       }) as never,
       { params: Promise.resolve({ pollId: "poll_1" }) } as never
     );

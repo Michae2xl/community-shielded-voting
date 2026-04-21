@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AdminPollCreateForm } from "@/components/admin-poll-create-form";
+import { ZcashBrandmark } from "@/components/zcash-brandmark";
 
 export default function NewPollPage() {
   return (
@@ -14,7 +15,10 @@ export default function NewPollPage() {
           <section className="hero-card editorial-panel editorial-panel--wide">
             <div className="editorial-section-head">
               <div>
-                <p className="eyebrow">Create</p>
+                <div className="eyebrow-row">
+                  <p className="eyebrow">Create</p>
+                  <ZcashBrandmark className="zcash-brandmark--compact" />
+                </div>
                 <h1 className="editorial-title">Prepare the poll, then review before opening.</h1>
               </div>
               <span className="status-pill">New poll</span>

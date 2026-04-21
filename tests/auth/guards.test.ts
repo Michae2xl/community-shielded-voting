@@ -6,6 +6,10 @@ describe("auth guards", () => {
     expect(canManagePolls("ADMIN")).toBe(true);
   });
 
+  it("allows creators to manage polls", () => {
+    expect(canManagePolls("CREATOR")).toBe(true);
+  });
+
   it("blocks users from managing polls", () => {
     expect(canManagePolls("USER")).toBe(false);
   });
@@ -33,7 +37,7 @@ describe("auth guards", () => {
         userId: "",
         pollVoterAccessId: "access_123",
         pollId: "poll_123",
-        nick: "voter01",
+        nick: "michae2xl",
         role: "VOTER_TEMP"
       })
     ).toEqual({
@@ -41,7 +45,7 @@ describe("auth guards", () => {
       userId: "",
       pollVoterAccessId: "access_123",
       pollId: "poll_123",
-      nick: "voter01",
+      nick: "michae2xl",
       role: "VOTER_TEMP"
     });
   });

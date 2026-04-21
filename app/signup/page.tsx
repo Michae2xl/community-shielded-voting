@@ -2,31 +2,30 @@ import Link from "next/link";
 import { ZcashBrandmark } from "@/components/zcash-brandmark";
 
 function mapErrorMessage(error: string | undefined) {
-  if (error === "1") {
-    return "Login failed. Check your user ID or temporary voter credentials and password.";
+  switch (error) {
+    case "invalid_input":
+      return "Use a unique user ID, a valid email, and a password with at least 8 characters.";
+    case "user_id_taken":
+      return "That user ID is already taken.";
+    case "email_taken":
+      return "That email is already in use.";
+    case "service_unavailable":
+      return "Signup is temporarily unavailable until the database is configured.";
+    case "forbidden_origin":
+      return "This signup attempt came from an untrusted origin.";
+    default:
+      return null;
   }
-
-  if (error === "service_unavailable") {
-    return "Login is temporarily unavailable until the database is configured.";
-  }
-
-  if (error === "forbidden_origin") {
-    return "This login attempt came from an untrusted origin.";
-  }
-
-  return null;
 }
 
-export default async function LoginPage({
+export default async function SignupPage({
   searchParams
 }: {
   searchParams?: Promise<{
     error?: string;
-    next?: string;
   }>;
 }) {
   const resolvedSearchParams = (await searchParams) ?? {};
-  const next = resolvedSearchParams.next ?? "";
   const errorMessage = mapErrorMessage(resolvedSearchParams.error);
 
   return (
@@ -35,18 +34,17 @@ export default async function LoginPage({
         <section className="hero-card auth-card">
           <div className="portal-body">
             <div className="eyebrow-row">
-              <p className="eyebrow">Portal access</p>
+              <p className="eyebrow">Creator access</p>
               <ZcashBrandmark className="zcash-brandmark--compact" />
             </div>
-            <h1 className="portal-subheading">Sign in</h1>
+            <h1 className="portal-subheading">Create your account</h1>
             <p className="lead">
-              Use your admin credentials or the temporary voter credentials from
-              your invite email to enter the portal.
+              Start using shielded voting immediately. Your account will own only
+              the polls you create.
             </p>
           </div>
           {errorMessage ? <p className="error-notice">{errorMessage}</p> : null}
-          <form action="/api/auth/login" method="post" className="portal-form">
-            <input type="hidden" name="next" value={next} />
+          <form action="/api/auth/signup" method="post" className="portal-form">
             <div className="field">
               <label className="field-label" htmlFor="userId">
                 User ID
@@ -55,7 +53,20 @@ export default async function LoginPage({
                 id="userId"
                 name="userId"
                 autoComplete="username"
-                placeholder="creator01 or invite user"
+                placeholder="creator01"
+                required
+              />
+            </div>
+            <div className="field">
+              <label className="field-label" htmlFor="email">
+                Email
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                placeholder="you@example.com"
                 required
               />
             </div>
@@ -67,27 +78,27 @@ export default async function LoginPage({
                 id="password"
                 name="password"
                 type="password"
-                autoComplete="current-password"
-                placeholder="Enter your password"
+                autoComplete="new-password"
+                placeholder="Choose a password"
                 required
               />
             </div>
-            <button type="submit">Enter portal</button>
+            <button type="submit">Create account</button>
           </form>
           <div className="portal-support">
             <div className="support-list">
               <div className="support-list-item">
-                <strong>Creator access</strong>
-                <span>Create polls, manage voters, and operate your own shielded voting workflow.</span>
+                <strong>Immediate access</strong>
+                <span>No email verification is required before creating your first poll.</span>
               </div>
               <div className="support-list-item">
-                <strong>Voter access</strong>
-                <span>Open your eligible polls and scan the pre-built ZIP-321 request.</span>
+                <strong>Owned by you</strong>
+                <span>Your dashboard will show only the polls you create.</span>
               </div>
             </div>
             <div className="editorial-inline-actions">
-              <Link href="/signup" className="button-link">
-                Create account
+              <Link href="/login" className="button-link">
+                Sign in instead
               </Link>
               <Link href="/" className="button-link">
                 Return to overview

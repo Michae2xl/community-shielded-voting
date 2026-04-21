@@ -58,7 +58,7 @@ describe("poll lock-choice route", () => {
       userId: "",
       pollVoterAccessId: "access_1",
       pollId: "poll_1",
-      nick: "voter01",
+      nick: "michae2xl",
       role: "VOTER_TEMP"
     });
     lockTicketChoiceMock.mockResolvedValue({
@@ -135,7 +135,7 @@ describe("poll lock-choice route", () => {
       userId: "",
       pollVoterAccessId: "access_1",
       pollId: "poll_1",
-      nick: "voter01",
+      nick: "michae2xl",
       role: "VOTER_TEMP"
     });
 

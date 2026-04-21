@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 620" width="100%" height="100%" fill="none">
+  <defs>
+    <linearGradient id="shieldBorderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F4B728" />
+      <stop offset="50%" stop-color="#D49A1C" />
+      <stop offset="100%" stop-color="#A67812" />
+    </linearGradient>
+    <linearGradient id="shieldFillGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#272220" />
+      <stop offset="100%" stop-color="#110F10" />
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="12" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+    <filter id="coinGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <g opacity="0.5" stroke="#C8A45E" stroke-width="1.5">
+    <line x1="106" y1="138" x2="224" y2="236" />
+    <line x1="534" y1="168" x2="420" y2="266" />
+    <line x1="156" y1="512" x2="262" y2="442" />
+    <line x1="494" y1="486" x2="388" y2="424" />
+  </g>
+  <g fill="#D3A13A">
+    <circle cx="106" cy="138" r="4" />
+    <circle cx="534" cy="168" r="4" />
+    <circle cx="156" cy="512" r="4" />
+    <circle cx="494" cy="486" r="4" />
+  </g>
+
+  <g transform="translate(0 10)">
+    <path
+      d="M 320 198 L 500 166 L 474 382 C 474 498 320 596 320 596 C 320 596 166 498 166 382 L 140 166 Z"
+      fill="url(#shieldFillGrad)"
+      stroke="url(#shieldBorderGrad)"
+      stroke-width="12"
+      filter="url(#glow)"
+    />
+    <path
+      d="M 320 218 L 470 191 L 448 378 C 448 474 320 558 320 558 C 320 558 192 474 192 378 L 170 191 Z"
+      stroke="#F4B728"
+      stroke-opacity="0.42"
+      stroke-width="2"
+    />
+    <path
+      d="M 320 198 L 320 596 C 320 596 166 498 166 382 L 140 166 Z"
+      fill="#FFFFFF"
+      fill-opacity="0.04"
+    />
+  </g>
+
+  <g transform="translate(0 2)">
+    <rect x="252" y="68" width="136" height="194" rx="7" fill="#FCFBF9" stroke="#D8DEE6" stroke-width="2" />
+    <path d="M 388 100 L 358 68 L 388 68 Z" fill="#CBD5E1" />
+    <path d="M 358 68 L 358 100 L 388 100 Z" fill="#E2E8F0" />
+    <text x="320" y="95" font-family="'Segoe UI', Helvetica, sans-serif" font-size="13" fill="#1D1814" font-weight="700" text-anchor="middle" letter-spacing="1">GOVERNANCE</text>
+    <line x1="274" y1="108" x2="366" y2="108" stroke="#CBD5E1" stroke-width="2" />
+
+    <rect x="278" y="132" width="18" height="18" rx="3" fill="none" stroke="#94A3B8" stroke-width="2" />
+    <rect x="312" y="138" width="54" height="7" rx="3.5" fill="#E2E8F0" />
+
+    <rect x="278" y="168" width="18" height="18" rx="3" fill="none" stroke="#94A3B8" stroke-width="2" />
+    <rect x="312" y="174" width="42" height="7" rx="3.5" fill="#E2E8F0" />
+
+    <rect x="278" y="204" width="18" height="18" rx="3" fill="#FFFBEB" stroke="#F4B728" stroke-width="2" />
+    <rect x="312" y="210" width="58" height="7" rx="3.5" fill="#F4B728" />
+    <path d="M 281 214 L 286 219 L 299 203" stroke="#D49A1C" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+
+    <rect x="296" y="232" width="92" height="24" rx="12" fill="#E8F4F0" stroke="#10B981" stroke-width="1.5" stroke-dasharray="4 2" />
+    <text x="342" y="248" font-family="'Segoe UI', Helvetica, sans-serif" font-size="10.5" fill="#10B981" font-weight="700" text-anchor="middle">SHIELDED</text>
+  </g>
+
+  <g transform="translate(0 8)">
+    <rect x="240" y="270" width="160" height="11" rx="5.5" fill="#050606" stroke="#3A3F42" stroke-width="2" />
+    <rect x="248" y="273" width="144" height="5" rx="2.5" fill="#000000" />
+    <path d="M 266 276 L 374 276" stroke="#F4B728" stroke-width="2" opacity="0.8" />
+  </g>
+
+  <g transform="translate(320 420)">
+    <circle cx="0" cy="0" r="68" fill="#F4B728" filter="url(#coinGlow)" />
+    <g fill="#FFFFFF">
+      <path d="M -24 -26 L 24 -26 L 24 -13 L -4 17 L 24 17 L 24 30 L -24 30 L -24 17 L 4 -13 L -24 -13 Z" />
+      <rect x="-5.5" y="-37" width="11" height="11" />
+      <rect x="-5.5" y="30" width="11" height="11" />
+    </g>
+  </g>
+</svg>

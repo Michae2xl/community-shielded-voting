@@ -182,6 +182,7 @@ export function AdminPollCreateForm() {
     <form
       onSubmit={(event) => void handleSubmit(event)}
       className="hero-card editorial-panel editorial-panel--form"
+      autoComplete="off"
     >
       <div className="editorial-section-head">
         <div>
@@ -264,23 +265,31 @@ export function AdminPollCreateForm() {
                 <tr key={row.id}>
                   <td>
                     <input
+                      name={`voter-nick-${row.id}`}
                       aria-label={`Voter nick ${index + 1}`}
                       value={row.nick}
                       onChange={(event) =>
                         updateRow(row.id, "nick", event.currentTarget.value)
                       }
                       placeholder="voter01"
+                      autoComplete="off"
+                      data-lpignore="true"
+                      data-1p-ignore="true"
                     />
                   </td>
                   <td>
                     <input
+                      name={`voter-email-${row.id}`}
                       aria-label={`Voter email ${index + 1}`}
                       value={row.email}
                       onChange={(event) =>
                         updateRow(row.id, "email", event.currentTarget.value)
                       }
-                      placeholder="voter01@example.com"
+                      placeholder="voter@example.com"
                       type="email"
+                      autoComplete="off"
+                      data-lpignore="true"
+                      data-1p-ignore="true"
                     />
                   </td>
                   <td className="editorial-table-actions">
@@ -309,7 +318,10 @@ export function AdminPollCreateForm() {
             <textarea
               value={bulkInput}
               onChange={(event) => setBulkInput(event.currentTarget.value)}
-              placeholder={"voter01,voter01@example.com\nalice,alice@example.com"}
+              placeholder={"voter01,voter01@example.com\nvoter02,voter02@example.com"}
+              autoComplete="off"
+              data-lpignore="true"
+              data-1p-ignore="true"
             />
             <div className="editorial-inline-actions">
               <button type="button" className="secondary-button" onClick={applyBulkInput}>

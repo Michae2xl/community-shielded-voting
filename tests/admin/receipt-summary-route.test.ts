@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { readSessionMock, pollFindUniqueMock, voteReceiptFindManyMock } = vi.hoisted(
+const { readSessionMock, findOwnedPollMock, voteReceiptFindManyMock } = vi.hoisted(
   () => ({
     readSessionMock: vi.fn(),
-    pollFindUniqueMock: vi.fn(),
+    findOwnedPollMock: vi.fn(),
     voteReceiptFindManyMock: vi.fn()
   })
 );
@@ -12,11 +12,12 @@ vi.mock("@/lib/auth/session", () => ({
   readSession: readSessionMock
 }));
 
+vi.mock("@/lib/auth/poll-ownership", () => ({
+  findOwnedPoll: findOwnedPollMock
+}));
+
 vi.mock("@/lib/db", () => ({
   db: {
-    poll: {
-      findUnique: pollFindUniqueMock
-    },
     voteReceipt: {
       findMany: voteReceiptFindManyMock
     }
@@ -27,7 +28,7 @@ import { GET } from "@/app/api/admin/polls/[pollId]/receipts/route";
 
 beforeEach(() => {
   readSessionMock.mockReset();
-  pollFindUniqueMock.mockReset();
+  findOwnedPollMock.mockReset();
   voteReceiptFindManyMock.mockReset();
 });
 
@@ -38,7 +39,7 @@ describe("admin receipt summary route", () => {
       nick: "admin",
       role: "ADMIN"
     });
-    pollFindUniqueMock.mockResolvedValue({
+    findOwnedPollMock.mockResolvedValue({
       optionALabel: "Approve",
       optionBLabel: "Reject",
       optionCLabel: "Abstain",

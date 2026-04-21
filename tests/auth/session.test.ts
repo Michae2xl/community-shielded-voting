@@ -78,7 +78,7 @@ describe("session helpers", () => {
       userId: "",
       pollVoterAccessId: "access_1",
       pollId: "poll_1",
-      nick: "voter01",
+      nick: "michae2xl",
       role: "VOTER_TEMP"
     });
 
@@ -88,7 +88,7 @@ describe("session helpers", () => {
     pollVoterAccessFindUniqueMock.mockResolvedValue({
       id: "access_1",
       pollId: "poll_1",
-      nick: "voter01",
+      nick: "michae2xl",
       status: "ACTIVE",
       expiresAt: new Date("2099-04-22T22:56:36.000Z")
     });
@@ -98,7 +98,7 @@ describe("session helpers", () => {
       userId: "",
       pollVoterAccessId: "access_1",
       pollId: "poll_1",
-      nick: "voter01",
+      nick: "michae2xl",
       role: "VOTER_TEMP"
     });
   });
@@ -109,7 +109,7 @@ describe("session helpers", () => {
       userId: "",
       pollVoterAccessId: "access_1",
       pollId: "poll_1",
-      nick: "voter01",
+      nick: "michae2xl",
       role: "VOTER_TEMP"
     });
 
@@ -119,7 +119,7 @@ describe("session helpers", () => {
     pollVoterAccessFindUniqueMock.mockResolvedValue({
       id: "access_1",
       pollId: "poll_1",
-      nick: "voter01",
+      nick: "michae2xl",
       status: "ACTIVE",
       expiresAt: new Date("2020-04-22T22:56:36.000Z")
     });

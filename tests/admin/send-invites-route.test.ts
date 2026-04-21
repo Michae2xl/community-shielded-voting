@@ -1,12 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { readSessionMock, sendPollInvitesMock } = vi.hoisted(() => ({
+const { readSessionMock, sendPollInvitesMock, creatorOwnsPollMock } = vi.hoisted(() => ({
   readSessionMock: vi.fn(),
-  sendPollInvitesMock: vi.fn()
+  sendPollInvitesMock: vi.fn(),
+  creatorOwnsPollMock: vi.fn()
 }));
 
 vi.mock("@/lib/auth/session", () => ({
   readSession: readSessionMock
+}));
+
+vi.mock("@/lib/auth/poll-ownership", () => ({
+  creatorOwnsPoll: creatorOwnsPollMock
 }));
 
 vi.mock("@/lib/services/poll-invites", () => ({
@@ -27,6 +32,7 @@ import { POST } from "@/app/api/admin/polls/[pollId]/invites/send/route";
 beforeEach(() => {
   readSessionMock.mockReset();
   sendPollInvitesMock.mockReset();
+  creatorOwnsPollMock.mockReset();
 });
 
 describe("admin send invites route", () => {
@@ -39,7 +45,10 @@ describe("admin send invites route", () => {
 
     const response = await POST(
       new Request("http://localhost/api/admin/polls/poll_1/invites/send", {
-        method: "POST"
+        method: "POST",
+        headers: {
+          origin: "http://localhost"
+        }
       }) as never,
       { params: Promise.resolve({ pollId: "poll_1" }) } as never
     );
@@ -56,6 +65,7 @@ describe("admin send invites route", () => {
       nick: "admin",
       role: "ADMIN"
     });
+    creatorOwnsPollMock.mockResolvedValue(true);
     sendPollInvitesMock.mockResolvedValue({
       totalEligible: 3,
       sent: 2,
@@ -65,7 +75,10 @@ describe("admin send invites route", () => {
 
     const response = await POST(
       new Request("http://localhost/api/admin/polls/poll_1/invites/send", {
-        method: "POST"
+        method: "POST",
+        headers: {
+          origin: "http://localhost"
+        }
       }) as never,
       { params: Promise.resolve({ pollId: "poll_1" }) } as never
     );

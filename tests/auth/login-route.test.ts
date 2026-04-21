@@ -85,7 +85,7 @@ describe("login route", () => {
 
     const response = await POST(
       makeRequest({
-        nick: "alice",
+        userId: "alice",
         password: "secret",
         next: "/polls/custom?tab=1"
       }) as never
@@ -111,16 +111,16 @@ describe("login route", () => {
   it("falls back to the role destination for unsafe next values", async () => {
     findUniqueMock.mockResolvedValue({
       id: "user_1",
-      nick: "admin",
+      nick: "creator01",
       passwordHash: "hash",
-      role: "ADMIN",
+      role: "CREATOR",
       status: "ACTIVE"
     });
     verifyPasswordMock.mockResolvedValue(true);
 
     const response = await POST(
       makeRequest({
-        nick: "admin",
+        userId: "creator01",
         password: "secret",
         next: "https://evil.example"
       }) as never
@@ -136,12 +136,12 @@ describe("login route", () => {
     authenticateTemporaryPollVoterMock.mockResolvedValue({
       id: "access_1",
       pollId: "poll_1",
-      nick: "voter01"
+      nick: "michae2xl"
     });
 
     const response = await POST(
       makeRequest({
-        nick: "voter01",
+        userId: "michae2xl",
         password: "TEMP-PASS-01",
         next: "/polls/poll_1"
       }) as never
@@ -152,7 +152,7 @@ describe("login route", () => {
     expect(location.pathname).toBe("/polls/poll_1");
     expect(authenticateTemporaryPollVoterMock).toHaveBeenCalledWith({
       pollId: "poll_1",
-      nick: "voter01",
+      nick: "michae2xl",
       password: "TEMP-PASS-01"
     });
     expect(writeSessionCookieMock).toHaveBeenCalledWith({
@@ -160,7 +160,7 @@ describe("login route", () => {
       userId: "",
       pollVoterAccessId: "access_1",
       pollId: "poll_1",
-      nick: "voter01",
+      nick: "michae2xl",
       role: "VOTER_TEMP"
     });
     expect(markPollInviteOpenedMock).toHaveBeenCalledWith({
@@ -172,7 +172,7 @@ describe("login route", () => {
   it("falls back to temporary poll auth when the permanent password is invalid", async () => {
     findUniqueMock.mockResolvedValue({
       id: "user_1",
-      nick: "voter01",
+      nick: "michae2xl",
       passwordHash: "hash",
       role: "USER",
       status: "ACTIVE"
@@ -181,12 +181,12 @@ describe("login route", () => {
     authenticateTemporaryPollVoterMock.mockResolvedValue({
       id: "access_1",
       pollId: "poll_1",
-      nick: "voter01"
+      nick: "michae2xl"
     });
 
     const response = await POST(
       makeRequest({
-        nick: "voter01",
+        userId: "michae2xl",
         password: "TEMP-PASS-01",
         next: "/polls/poll_1"
       }) as never
@@ -209,7 +209,7 @@ describe("login route", () => {
 
     const response = await POST(
       makeRequest({
-        nick: "alice",
+        userId: "alice",
         password: "secret",
         next: "/polls"
       }) as never
@@ -227,16 +227,16 @@ describe("login route", () => {
   it("accepts JSON payloads and redirects through the forwarded host", async () => {
     findUniqueMock.mockResolvedValue({
       id: "user_1",
-      nick: "admin",
+      nick: "creator01",
       passwordHash: "hash",
-      role: "ADMIN",
+      role: "CREATOR",
       status: "ACTIVE"
     });
     verifyPasswordMock.mockResolvedValue(true);
 
     const response = await POST(
       makeJsonRequest({
-        nick: "admin",
+        userId: "creator01",
         password: "secret"
       }) as never
     );
@@ -257,7 +257,7 @@ describe("login route", () => {
           origin: "https://evil.example"
         },
         body: new URLSearchParams({
-          nick: "alice",
+          userId: "alice",
           password: "secret",
           next: "/polls"
         })

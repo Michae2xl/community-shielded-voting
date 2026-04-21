@@ -2,11 +2,25 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
   readSessionMock,
+  creatorOwnsPollMock,
   anchorPollMock,
-  findUniqueMock,
-  updateManyMock,
+  buildAndStoreAnchorMemoMock,
+  markPollAnchoringMock,
+  releasePollAnchoringMock,
+  MockPollServiceError,
   AnchorClientErrorMock
 } = vi.hoisted(() => {
+  class MockPollServiceError extends Error {
+    constructor(
+      message: string,
+      public readonly status: 400 | 404 | 409,
+      public readonly code: string,
+      public readonly details?: Record<string, unknown>
+    ) {
+      super(message);
+    }
+  }
+
   class AnchorClientError extends Error {
     kind: "SAFE_PRE_SUBMISSION_FAILURE" | "UNKNOWN_SUBMISSION_STATE";
 
@@ -15,23 +29,35 @@ const {
       kind: "SAFE_PRE_SUBMISSION_FAILURE" | "UNKNOWN_SUBMISSION_STATE"
     ) {
       super(message);
-      this.name = "AnchorClientError";
       this.kind = kind;
-      Object.setPrototypeOf(this, new.target.prototype);
     }
   }
 
   return {
     readSessionMock: vi.fn(),
+    creatorOwnsPollMock: vi.fn(),
     anchorPollMock: vi.fn(),
-    findUniqueMock: vi.fn(),
-    updateManyMock: vi.fn(),
+    buildAndStoreAnchorMemoMock: vi.fn(),
+    markPollAnchoringMock: vi.fn(),
+    releasePollAnchoringMock: vi.fn(),
+    MockPollServiceError,
     AnchorClientErrorMock: AnchorClientError
   };
 });
 
 vi.mock("@/lib/auth/session", () => ({
   readSession: readSessionMock
+}));
+
+vi.mock("@/lib/auth/poll-ownership", () => ({
+  creatorOwnsPoll: creatorOwnsPollMock
+}));
+
+vi.mock("@/lib/services/polls", () => ({
+  PollServiceError: MockPollServiceError,
+  buildAndStoreAnchorMemo: buildAndStoreAnchorMemoMock,
+  markPollAnchoring: markPollAnchoringMock,
+  releasePollAnchoring: releasePollAnchoringMock
 }));
 
 vi.mock("@/lib/zcash/anchor-client", () => ({
@@ -41,65 +67,24 @@ vi.mock("@/lib/zcash/anchor-client", () => ({
   })
 }));
 
-vi.mock("@/lib/db", () => ({
-  db: {
-    poll: {
-      findUnique: findUniqueMock,
-      updateMany: updateManyMock
-    }
-  }
-}));
-
 import { POST } from "@/app/api/admin/polls/[pollId]/anchor/route";
 
 beforeEach(() => {
   readSessionMock.mockReset();
+  creatorOwnsPollMock.mockReset();
   anchorPollMock.mockReset();
-  findUniqueMock.mockReset();
-  updateManyMock.mockReset();
+  buildAndStoreAnchorMemoMock.mockReset();
+  markPollAnchoringMock.mockReset();
+  releasePollAnchoringMock.mockReset();
 });
 
 function makeRequest() {
   return new Request("http://localhost/api/admin/polls/poll_1/anchor", {
-    method: "POST"
-  });
-}
-
-function installDraftPoll() {
-  const poll = {
-    id: "poll_1",
-    status: "DRAFT" as const,
-    anchorTxid: null as string | null,
-    questionHash: "hash_1",
-    opensAt: new Date("2026-05-01T10:00:00.000Z"),
-    closesAt: new Date("2026-05-03T10:00:00.000Z")
-  };
-
-  findUniqueMock.mockImplementation(async ({ where }: { where: { id: string } }) =>
-    where.id === poll.id ? { ...poll } : null
-  );
-  updateManyMock.mockImplementation(
-    async ({
-      where,
-      data
-    }: {
-      where: { id: string; status: typeof poll.status; anchorTxid?: null };
-      data: Partial<typeof poll>;
-    }) => {
-      if (where.id !== poll.id || where.status !== poll.status) {
-        return { count: 0 };
-      }
-
-      if ("anchorTxid" in where && poll.anchorTxid !== null) {
-        return { count: 0 };
-      }
-
-      Object.assign(poll, data);
-      return { count: 1 };
+    method: "POST",
+    headers: {
+      origin: "http://localhost"
     }
-  );
-
-  return poll;
+  });
 }
 
 describe("admin poll anchor route", () => {
@@ -109,13 +94,10 @@ describe("admin poll anchor route", () => {
       nick: "alice",
       role: "ADMIN"
     });
-    findUniqueMock.mockResolvedValue({
-      id: "poll_1",
-      status: "SCHEDULED",
-      questionHash: "hash_1",
-      opensAt: new Date("2026-05-01T10:00:00.000Z"),
-      closesAt: new Date("2026-05-03T10:00:00.000Z")
-    });
+    creatorOwnsPollMock.mockResolvedValue(true);
+    buildAndStoreAnchorMemoMock.mockRejectedValue(
+      new MockPollServiceError("not draft", 409, "POLL_NOT_DRAFT")
+    );
 
     const response = await POST(
       makeRequest() as never,
@@ -127,16 +109,17 @@ describe("admin poll anchor route", () => {
       error: "POLL_NOT_DRAFT"
     });
     expect(anchorPollMock).not.toHaveBeenCalled();
-    expect(updateManyMock).not.toHaveBeenCalled();
+    expect(markPollAnchoringMock).not.toHaveBeenCalled();
   });
 
-  it("rolls back to draft on a safe pre-submission failure and allows retry", async () => {
-    const poll = installDraftPoll();
+  it("rolls back on a safe pre-submission failure and allows retry", async () => {
     readSessionMock.mockResolvedValue({
       userId: "user_1",
       nick: "alice",
       role: "ADMIN"
     });
+    creatorOwnsPollMock.mockResolvedValue(true);
+    buildAndStoreAnchorMemoMock.mockResolvedValue("memo-1");
     anchorPollMock
       .mockRejectedValueOnce(
         new AnchorClientErrorMock(
@@ -155,8 +138,7 @@ describe("admin poll anchor route", () => {
     );
 
     expect(firstResponse.status).toBe(502);
-    expect(poll.status).toBe("DRAFT");
-    expect(poll.anchorTxid).toBeNull();
+    expect(releasePollAnchoringMock).toHaveBeenCalledWith("poll_1");
 
     const secondResponse = await POST(
       makeRequest() as never,
@@ -164,18 +146,18 @@ describe("admin poll anchor route", () => {
     );
 
     expect(secondResponse.status).toBe(200);
+    expect(markPollAnchoringMock).toHaveBeenCalledWith("poll_1", "txid_1");
     expect(anchorPollMock).toHaveBeenCalledTimes(2);
-    expect(poll.status).toBe("SCHEDULED");
-    expect(poll.anchorTxid).toBe("txid_1");
   });
 
   it("leaves the poll anchoring on an unknown submission state failure", async () => {
-    const poll = installDraftPoll();
     readSessionMock.mockResolvedValue({
       userId: "user_1",
       nick: "alice",
       role: "ADMIN"
     });
+    creatorOwnsPollMock.mockResolvedValue(true);
+    buildAndStoreAnchorMemoMock.mockResolvedValue("memo-1");
     anchorPollMock.mockRejectedValueOnce(
       new AnchorClientErrorMock(
         "anchor uncertain",
@@ -189,15 +171,10 @@ describe("admin poll anchor route", () => {
     );
 
     expect(response.status).toBe(502);
-    expect(poll.status).toBe("ANCHORING");
-    expect(poll.anchorTxid).toBeNull();
-    expect(updateManyMock).toHaveBeenCalledTimes(1);
-
-    const retryResponse = await POST(
-      makeRequest() as never,
-      { params: Promise.resolve({ pollId: "poll_1" }) } as never
-    );
-
-    expect(retryResponse.status).toBe(409);
+    await expect(response.json()).resolves.toEqual({
+      error: "ANCHOR_UNKNOWN_STATE"
+    });
+    expect(releasePollAnchoringMock).not.toHaveBeenCalled();
+    expect(markPollAnchoringMock).not.toHaveBeenCalled();
   });
 });

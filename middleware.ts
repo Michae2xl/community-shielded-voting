@@ -3,6 +3,7 @@ import { SESSION_COOKIE_NAME } from "@/lib/auth/guards";
 import { db } from "@/lib/db";
 import { verifySessionToken } from "@/lib/auth/session-token";
 import { buildRequestUrl } from "@/lib/http/request-url";
+import { canManagePolls } from "@/lib/auth/guards";
 
 function buildLoginUrl(request: NextRequest, error?: string) {
   const loginUrl = buildRequestUrl(request, "/login");
@@ -49,7 +50,7 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(buildLoginUrl(request));
       }
 
-      if (request.nextUrl.pathname.startsWith("/admin") && user.role !== "ADMIN") {
+      if (request.nextUrl.pathname.startsWith("/admin") && !canManagePolls(user.role)) {
         return NextResponse.redirect(buildRequestUrl(request, "/polls"));
       }
 

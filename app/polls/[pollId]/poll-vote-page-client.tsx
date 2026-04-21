@@ -266,6 +266,8 @@ export default function PollVotePageClient({
       ? state.ticket.lockedRequest
       : null;
   const receipt = state.kind === "voted" ? state.ticket.receipt : null;
+  const showLockedGuidance =
+    state.kind === "locked" || state.kind === "awaiting_confirmation";
   const options: AnswerGridOption[] = selectableRequests.map((request) => ({
     optionLetter: request.optionLetter,
     label: poll?.optionLabels[request.optionLetter] ?? `Option ${request.optionLetter}`
@@ -448,6 +450,32 @@ export default function PollVotePageClient({
                   </button>
                 </div>
               </>
+            ) : showLockedGuidance ? (
+              <div className="vote-guidance-card">
+                <p className="section-label">Locked ticket</p>
+                <h3 className="form-section-title">
+                  {state.kind === "awaiting_confirmation"
+                    ? "Waiting for one-block confirmation"
+                    : "Single QR ready"}
+                </h3>
+                <div className="vote-guidance-copy">
+                  <p>
+                    {state.kind === "awaiting_confirmation"
+                      ? "Payment detected. This ticket remains locked while we wait for one on-chain confirmation. The QR code will disappear after confirmation."
+                      : "Payment will be detected, waiting for one-block confirmation. The QR code will disappear after confirmation."}
+                  </p>
+                  <p>
+                    Do not send again. Even if you do, it will not be counted,
+                    because this ticket accepts only one valid vote.
+                  </p>
+                  <p>
+                    You can follow the public result here:{" "}
+                    <a href="/polls" className="metric-card-link">
+                      https://voting.zkglobalcredit.tech/polls
+                    </a>
+                  </p>
+                </div>
+              </div>
             ) : (
               <p className="muted-text">{bodyMessage}</p>
             )}
@@ -459,14 +487,6 @@ export default function PollVotePageClient({
                 uri={lockedRequest.zip321Uri}
                 title={`Vote ${lockedRequest.optionLetter} · ${poll?.optionLabels[lockedRequest.optionLetter] ?? `Option ${lockedRequest.optionLetter}`}`}
               />
-              <p className="muted-text qr-support-note">
-                Payment will be detected, waiting for one-block confirmation. The
-                QR code will disappear after confirmation. You can see the votes
-                here:{" "}
-                <a href="/polls" className="metric-card-link">
-                  https://demo.community-shielded-voting.example/polls
-                </a>
-              </p>
             </section>
           ) : null}
           {state.kind === "voted" ? (

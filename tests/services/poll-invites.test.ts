@@ -215,8 +215,8 @@ describe("sendPollInvites", () => {
       voterAccesses: [
         {
           id: "access_1",
-          nick: "voter01",
-          email: "voter01@example.com",
+          nick: "michae2xl",
+          email: "michaelguima@proton.me",
           inviteToken: "token_1"
         }
       ]
@@ -225,7 +225,7 @@ describe("sendPollInvites", () => {
       id: "invite_1",
       pollId: "poll_1",
       pollVoterAccessId: "access_1",
-      email: "voter01@example.com",
+      email: "michaelguima@proton.me",
       inviteToken: "token_1",
       openedAt: null,
       status: "PENDING"
@@ -259,21 +259,21 @@ describe("sendPollInvites", () => {
         }
       },
       update: {
-        email: "voter01@example.com"
+        email: "michaelguima@proton.me"
       },
       create: expect.objectContaining({
         pollId: "poll_1",
         pollVoterAccessId: "access_1",
-        email: "voter01@example.com",
+        email: "michaelguima@proton.me",
         inviteToken: "token_1"
       })
     });
     expect(sendPollInviteEmailMock).toHaveBeenCalledWith({
-      to: "voter01@example.com",
+      to: "michaelguima@proton.me",
       subject: expect.stringMatching(/which governance path/i),
       pollQuestion: "Which governance path should be activated next?",
-      voterNick: "voter01",
-      loginNick: "voter01",
+      voterNick: "michae2xl",
+      loginNick: "michae2xl",
       temporaryPassword: "TEMP-PASS-01",
       inviteUrl: "https://vote.example.com/invites/token_1",
       opensAt: "2026-05-01T10:00:00.000Z",

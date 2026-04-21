@@ -1,12 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { readSessionMock, syncPollLifecycleForPollMock } = vi.hoisted(() => ({
+const {
+  readSessionMock,
+  syncPollLifecycleForPollMock,
+  creatorOwnsPollMock
+} = vi.hoisted(() => ({
   readSessionMock: vi.fn(),
-  syncPollLifecycleForPollMock: vi.fn()
+  syncPollLifecycleForPollMock: vi.fn(),
+  creatorOwnsPollMock: vi.fn()
 }));
 
 vi.mock("@/lib/auth/session", () => ({
   readSession: readSessionMock
+}));
+
+vi.mock("@/lib/auth/poll-ownership", () => ({
+  creatorOwnsPoll: creatorOwnsPollMock
 }));
 
 vi.mock("@/lib/services/poll-lifecycle", () => ({
@@ -18,6 +27,7 @@ import { POST } from "@/app/api/admin/polls/[pollId]/lifecycle/sync/route";
 beforeEach(() => {
   readSessionMock.mockReset();
   syncPollLifecycleForPollMock.mockReset();
+  creatorOwnsPollMock.mockReset();
 });
 
 describe("admin lifecycle sync route", () => {
@@ -30,7 +40,10 @@ describe("admin lifecycle sync route", () => {
 
     const response = await POST(
       new Request("http://localhost/api/admin/polls/poll_1/lifecycle/sync", {
-        method: "POST"
+        method: "POST",
+        headers: {
+          origin: "http://localhost"
+        }
       }) as never,
       { params: Promise.resolve({ pollId: "poll_1" }) } as never
     );
@@ -44,6 +57,7 @@ describe("admin lifecycle sync route", () => {
       nick: "admin",
       role: "ADMIN"
     });
+    creatorOwnsPollMock.mockResolvedValue(true);
     syncPollLifecycleForPollMock.mockResolvedValue({
       pollId: "poll_1",
       previousStatus: "SCHEDULED",
@@ -53,7 +67,10 @@ describe("admin lifecycle sync route", () => {
 
     const response = await POST(
       new Request("http://localhost/api/admin/polls/poll_1/lifecycle/sync", {
-        method: "POST"
+        method: "POST",
+        headers: {
+          origin: "http://localhost"
+        }
       }) as never,
       { params: Promise.resolve({ pollId: "poll_1" }) } as never
     );

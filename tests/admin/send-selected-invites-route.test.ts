@@ -2,13 +2,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
   readSessionMock,
-  pollFindUniqueMock,
+  findOwnedPollMock,
   pollVoterAccessFindManyMock,
   issueTicketForVoterMock,
   sendPollInvitesMock
 } = vi.hoisted(() => ({
   readSessionMock: vi.fn(),
-  pollFindUniqueMock: vi.fn(),
+  findOwnedPollMock: vi.fn(),
   pollVoterAccessFindManyMock: vi.fn(),
   issueTicketForVoterMock: vi.fn(),
   sendPollInvitesMock: vi.fn()
@@ -18,11 +18,12 @@ vi.mock("@/lib/auth/session", () => ({
   readSession: readSessionMock
 }));
 
+vi.mock("@/lib/auth/poll-ownership", () => ({
+  findOwnedPoll: findOwnedPollMock
+}));
+
 vi.mock("@/lib/db", () => ({
   db: {
-    poll: {
-      findUnique: pollFindUniqueMock
-    },
     pollVoterAccess: {
       findMany: pollVoterAccessFindManyMock
     }
@@ -42,7 +43,7 @@ import { POST } from "@/app/api/admin/polls/[pollId]/invites/send-selected/route
 
 beforeEach(() => {
   readSessionMock.mockReset();
-  pollFindUniqueMock.mockReset();
+  findOwnedPollMock.mockReset();
   pollVoterAccessFindManyMock.mockReset();
   issueTicketForVoterMock.mockReset();
   sendPollInvitesMock.mockReset();
@@ -55,7 +56,7 @@ describe("send-selected invites route", () => {
       role: "ADMIN",
       nick: "admin"
     });
-    pollFindUniqueMock.mockResolvedValue({
+    findOwnedPollMock.mockResolvedValue({
       id: "poll_1",
       feeZat: BigInt(10000),
       optionALabel: "Approve",

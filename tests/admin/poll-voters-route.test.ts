@@ -4,11 +4,13 @@ const {
   readSessionMock,
   createPollVoterAccessesMock,
   removePendingPollVoterAccessMock,
+  creatorOwnsPollMock,
   MockPollVoterAccessServiceError
 } = vi.hoisted(() => ({
   readSessionMock: vi.fn(),
   createPollVoterAccessesMock: vi.fn(),
   removePendingPollVoterAccessMock: vi.fn(),
+  creatorOwnsPollMock: vi.fn(),
   MockPollVoterAccessServiceError: class MockPollVoterAccessServiceError extends Error {
     constructor(
       message: string,
@@ -25,6 +27,10 @@ vi.mock("@/lib/auth/session", () => ({
   readSession: readSessionMock
 }));
 
+vi.mock("@/lib/auth/poll-ownership", () => ({
+  creatorOwnsPoll: creatorOwnsPollMock
+}));
+
 vi.mock("@/lib/services/poll-voter-access", () => ({
   PollVoterAccessServiceError: MockPollVoterAccessServiceError,
   createPollVoterAccesses: createPollVoterAccessesMock,
@@ -38,6 +44,7 @@ beforeEach(() => {
   readSessionMock.mockReset();
   createPollVoterAccessesMock.mockReset();
   removePendingPollVoterAccessMock.mockReset();
+  creatorOwnsPollMock.mockReset();
 });
 
 describe("admin poll voter routes", () => {
@@ -47,11 +54,12 @@ describe("admin poll voter routes", () => {
       role: "ADMIN",
       nick: "admin"
     });
+    creatorOwnsPollMock.mockResolvedValue(true);
     createPollVoterAccessesMock.mockResolvedValue([
       {
         id: "access_1",
-        nick: "voter01",
-        email: "voter01@example.com"
+        nick: "michae2xl",
+        email: "michaelguima@proton.me"
       }
     ]);
 
@@ -63,7 +71,7 @@ describe("admin poll voter routes", () => {
           origin: "http://localhost"
         },
         body: JSON.stringify({
-          voters: [{ nick: "voter01", email: "voter01@example.com" }]
+          voters: [{ nick: "michae2xl", email: "michaelguima@proton.me" }]
         })
       }) as never,
       { params: Promise.resolve({ pollId: "poll_1" }) }
@@ -71,15 +79,15 @@ describe("admin poll voter routes", () => {
 
     expect(createPollVoterAccessesMock).toHaveBeenCalledWith({
       pollId: "poll_1",
-      voters: [{ nick: "voter01", email: "voter01@example.com" }]
+      voters: [{ nick: "michae2xl", email: "michaelguima@proton.me" }]
     });
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
       created: [
         {
           id: "access_1",
-          nick: "voter01",
-          email: "voter01@example.com"
+          nick: "michae2xl",
+          email: "michaelguima@proton.me"
         }
       ]
     });
@@ -91,6 +99,7 @@ describe("admin poll voter routes", () => {
       role: "ADMIN",
       nick: "admin"
     });
+    creatorOwnsPollMock.mockResolvedValue(true);
     removePendingPollVoterAccessMock.mockRejectedValue(
       new MockPollVoterAccessServiceError(
         "voter already invited",

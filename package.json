@@ -1,6 +1,6 @@
 {
-  "name": "community-shielded-voting",
-  "private": false,
+  "name": "zcap-voting",
+  "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",

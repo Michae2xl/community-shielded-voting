@@ -3,6 +3,7 @@ import { AdminDeliveryManager } from "@/components/admin-delivery-manager";
 import { AdminVotersManager } from "@/components/admin-voters-manager";
 import { OpenPollButton } from "@/components/open-poll-button";
 import { PollActionButton } from "@/components/poll-action-button";
+import { ZcashBrandmark } from "@/components/zcash-brandmark";
 import { canManagePolls } from "@/lib/auth/guards";
 import {
   getPollOptionEntries,
@@ -136,9 +137,10 @@ export default async function AdminPollPage({
     );
   }
 
-  const poll = await db.poll.findUnique({
+  const poll = await db.poll.findFirst({
     where: {
-      id: pollId
+      id: pollId,
+      createdById: session.userId
     },
     select: {
       id: true,
@@ -206,7 +208,7 @@ export default async function AdminPollPage({
           </Link>
           <section className="hero-card editorial-panel">
             <p className="eyebrow">Admin</p>
-            <h1 className="editorial-title editorial-title--compact">Poll not found.</h1>
+            <h1 className="editorial-title editorial-title--compact">Poll not found or not available for this account.</h1>
           </section>
         </section>
       </main>
@@ -296,7 +298,10 @@ export default async function AdminPollPage({
         <header className="hero-card editorial-panel editorial-panel--wide">
           <div className="editorial-section-head">
             <div>
-              <p className="eyebrow">Admin dashboard</p>
+              <div className="eyebrow-row">
+                <p className="eyebrow">Admin dashboard</p>
+                <ZcashBrandmark className="zcash-brandmark--compact" />
+              </div>
               <h1 className="editorial-title">{poll.question}</h1>
             </div>
             <div className="editorial-inline-actions">

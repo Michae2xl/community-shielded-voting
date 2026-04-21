@@ -158,6 +158,27 @@ describe("middleware auth", () => {
     expect(response.headers.get("x-middleware-next")).toBe("1");
   });
 
+  it("allows creator sessions on admin routes", async () => {
+    const token = await createSessionToken({
+      subjectType: "user",
+      userId: "user_1",
+      nick: "creator01",
+      role: "CREATOR"
+    });
+
+    userFindUniqueMock.mockResolvedValue({
+      id: "user_1",
+      nick: "creator01",
+      role: "CREATOR",
+      status: "ACTIVE"
+    });
+
+    const response = await middleware(makeRequest("/admin/polls", token));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("x-middleware-next")).toBe("1");
+  });
+
   it("redirects to login with a service error when the database URL is missing", async () => {
     const token = await createSessionToken({
       subjectType: "user",
@@ -207,7 +228,7 @@ describe("middleware auth", () => {
       userId: "",
       pollVoterAccessId: "access_1",
       pollId: "poll_1",
-      nick: "voter01",
+      nick: "michae2xl",
       role: "VOTER_TEMP"
     });
 
@@ -230,7 +251,7 @@ describe("middleware auth", () => {
       userId: "",
       pollVoterAccessId: "access_1",
       pollId: "poll_1",
-      nick: "voter01",
+      nick: "michae2xl",
       role: "VOTER_TEMP"
     });
 

@@ -38,6 +38,7 @@ async function readLoginFields(request: NextRequest) {
   if (contentType.includes("application/json")) {
     const body = (await request.json().catch(() => null)) as
       | {
+          userId?: unknown;
           nick?: unknown;
           password?: unknown;
           next?: unknown;
@@ -45,7 +46,12 @@ async function readLoginFields(request: NextRequest) {
       | null;
 
     return {
-      nick: typeof body?.nick === "string" ? body.nick.trim() : "",
+      userId:
+        typeof body?.userId === "string"
+          ? body.userId.trim()
+          : typeof body?.nick === "string"
+            ? body.nick.trim()
+            : "",
       password: typeof body?.password === "string" ? body.password : "",
       next: typeof body?.next === "string" ? body.next : ""
     };
@@ -54,14 +60,14 @@ async function readLoginFields(request: NextRequest) {
   const formData = await request.formData().catch(() => null);
 
   return {
-    nick: String(formData?.get("nick") ?? "").trim(),
+    userId: String(formData?.get("userId") ?? formData?.get("nick") ?? "").trim(),
     password: String(formData?.get("password") ?? ""),
     next: String(formData?.get("next") ?? "")
   };
 }
 
 export async function POST(request: NextRequest) {
-  const { nick, password, next } = await readLoginFields(request);
+  const { userId, password, next } = await readLoginFields(request);
   const untrustedOrigin = rejectIfUntrustedWriteOrigin(request);
 
   if (untrustedOrigin) {
@@ -71,7 +77,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (!nick || !password) {
+  if (!userId || !password) {
     return NextResponse.redirect(buildFailureRedirect(request, next), 303);
   }
 
@@ -83,7 +89,7 @@ export async function POST(request: NextRequest) {
   }
 
   const user = await db.user.findUnique({
-    where: { nick }
+    where: { nick: userId }
   });
 
   let redirectPath: string | null = null;
@@ -119,7 +125,7 @@ export async function POST(request: NextRequest) {
     if (nextPollId) {
       const access = await authenticateTemporaryPollVoter({
         pollId: nextPollId,
-        nick,
+        nick: userId,
         password
       });
 

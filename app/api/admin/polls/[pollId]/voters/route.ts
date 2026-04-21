@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { ZodError, z } from "zod";
 import { canManagePolls } from "@/lib/auth/guards";
+import { creatorOwnsPoll } from "@/lib/auth/poll-ownership";
 import { readSession } from "@/lib/auth/session";
 import { rejectIfUntrustedWriteOrigin } from "@/lib/http/write-origin";
 import {
@@ -35,6 +36,12 @@ export async function POST(
 
   try {
     const { pollId } = await context.params;
+    const ownsPoll = await creatorOwnsPoll(pollId, session.userId);
+
+    if (!ownsPoll) {
+      return NextResponse.json({ error: "POLL_NOT_FOUND" }, { status: 404 });
+    }
+
     const body = bodySchema.parse(await request.json());
     const created = await createPollVoterAccesses({
       pollId,

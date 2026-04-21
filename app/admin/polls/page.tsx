@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { canManagePolls } from "@/lib/auth/guards";
 import { readSession } from "@/lib/auth/session";
+import { ZcashBrandmark } from "@/components/zcash-brandmark";
 import { db } from "@/lib/db";
 
 function formatDateTime(value: Date) {
@@ -32,6 +33,9 @@ export default async function AdminPollDirectoryPage() {
   }
 
   const polls = await db.poll.findMany({
+    where: {
+      createdById: session.userId
+    },
     orderBy: {
       createdAt: "desc"
     },
@@ -74,7 +78,10 @@ export default async function AdminPollDirectoryPage() {
         <header className="hero-card editorial-panel editorial-panel--wide">
           <div className="editorial-section-head">
             <div>
-              <p className="eyebrow">Admin</p>
+              <div className="eyebrow-row">
+                <p className="eyebrow">Admin</p>
+                <ZcashBrandmark className="zcash-brandmark--compact" />
+              </div>
               <h1 className="editorial-title">Polls</h1>
             </div>
             <div className="editorial-inline-actions">
@@ -85,9 +92,9 @@ export default async function AdminPollDirectoryPage() {
             </div>
           </div>
           <p className="editorial-copy editorial-copy--wide">
-            Review every poll in one place, jump into the dashboard, and track how
-            many voters completed the flow without opening the audit-heavy surface
-            first. Total polls: {polls.length}.
+            Review only the polls you created, jump into the dashboard, and track
+            how many voters completed the flow without opening the audit-heavy
+            surface first. Total polls: {polls.length}.
           </p>
         </header>
 

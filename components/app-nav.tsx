@@ -49,7 +49,7 @@ export function AppNav({
     <nav className="app-nav hero-card">
       <Link href="/" className="app-nav-brand">
         <span className="eyebrow">Shielded voting</span>
-        <strong>Community shielded voting</strong>
+        <strong>Shielded control rail</strong>
       </Link>
       <div className="app-nav-links" aria-label="Primary">
         {navItems.map((item) => {

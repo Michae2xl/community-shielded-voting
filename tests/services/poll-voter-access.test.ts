@@ -67,8 +67,8 @@ describe("poll voter access service", () => {
     pollVoterAccessFindUniqueMock.mockResolvedValue({
       id: "access_1",
       pollId: "poll_1",
-      nick: "voter01",
-      email: "voter01@example.com",
+      nick: "michae2xl",
+      email: "michaelguima@proton.me",
       passwordHash: issuedUpdateArgs.data.passwordHash,
       status: "ACTIVE",
       expiresAt: new Date(Date.now() + 60_000)
@@ -77,21 +77,21 @@ describe("poll voter access service", () => {
     await expect(
       authenticateTemporaryPollVoter({
         pollId: "poll_1",
-        nick: "voter01",
+        nick: "michae2xl",
         password: issuedPassword
       })
     ).resolves.toEqual(
       expect.objectContaining({
         id: "access_1",
         pollId: "poll_1",
-        nick: "voter01"
+        nick: "michae2xl"
       })
     );
 
     await expect(
       authenticateTemporaryPollVoter({
         pollId: "poll_1",
-        nick: "voter01",
+        nick: "michae2xl",
         password
       })
     ).resolves.toBeNull();
@@ -106,8 +106,8 @@ describe("poll voter access service", () => {
     pollVoterAccessFindUniqueMock.mockResolvedValueOnce({
       id: "access_expired",
       pollId: "poll_1",
-      nick: "voter01",
-      email: "voter01@example.com",
+      nick: "michae2xl",
+      email: "michaelguima@proton.me",
       passwordHash: issuedUpdateArgs.data.passwordHash,
       status: "ACTIVE",
       expiresAt: new Date(Date.now() - 1_000)
@@ -116,7 +116,7 @@ describe("poll voter access service", () => {
     await expect(
       authenticateTemporaryPollVoter({
         pollId: "poll_1",
-        nick: "voter01",
+        nick: "michae2xl",
         password: plaintextPassword
       })
     ).resolves.toBeNull();
@@ -124,8 +124,8 @@ describe("poll voter access service", () => {
     pollVoterAccessFindUniqueMock.mockResolvedValueOnce({
       id: "access_revoked",
       pollId: "poll_1",
-      nick: "voter01",
-      email: "voter01@example.com",
+      nick: "michae2xl",
+      email: "michaelguima@proton.me",
       passwordHash: issuedUpdateArgs.data.passwordHash,
       status: "REVOKED",
       expiresAt: new Date(Date.now() + 60_000)
@@ -134,7 +134,7 @@ describe("poll voter access service", () => {
     await expect(
       authenticateTemporaryPollVoter({
         pollId: "poll_1",
-        nick: "voter01",
+        nick: "michae2xl",
         password: plaintextPassword
       })
     ).resolves.toBeNull();

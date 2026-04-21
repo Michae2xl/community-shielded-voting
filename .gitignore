@@ -7,5 +7,4 @@ coverage
 dist
 *.log
 *.tsbuildinfo
-.DS_Store
 prisma/dev.db

@@ -31,7 +31,7 @@ describe("createDraftPollInputSchema", () => {
         optionALabel: "Approve",
         optionBLabel: "Reject",
         optionCLabel: "Abstain",
-        voters: [{ nick: "voter01", email: "voter01@example.com" }]
+        voters: [{ nick: "michae2xl", email: "michaelguima@proton.me" }]
       });
 
     expect(parsed.questionHash).toBe(
@@ -47,7 +47,7 @@ describe("createDraftPollInputSchema", () => {
         closesAt: "2026-05-01T10:00:00.000Z",
         optionALabel: "Approve",
         optionBLabel: "Reject",
-        voters: [{ nick: "voter01", email: "voter01@example.com" }]
+        voters: [{ nick: "michae2xl", email: "michaelguima@proton.me" }]
       })
     ).toThrowError(/closesAt must be after opensAt/i);
   });
@@ -67,7 +67,7 @@ describe("createDraftPoll", () => {
         optionCLabel: "",
         optionDLabel: "",
         optionELabel: "",
-        voters: [{ nick: "voter01", email: "voter01@example.com" }]
+        voters: [{ nick: "michae2xl", email: "michaelguima@proton.me" }]
       },
       "admin_1"
     );
@@ -82,8 +82,8 @@ describe("createDraftPoll", () => {
           voterAccesses: {
             create: [
               expect.objectContaining({
-                nick: "voter01",
-                email: "voter01@example.com",
+                nick: "michae2xl",
+                email: "michaelguima@proton.me",
                 inviteToken: expect.any(String),
                 expiresAt: new Date("2026-04-22T12:00:00.000Z")
               })
@@ -104,8 +104,8 @@ describe("createDraftPoll", () => {
           optionALabel: "Approve",
           optionBLabel: "Reject",
           voters: [
-            { nick: "voter01", email: "voter01@example.com" },
-            { nick: "voter01", email: "other@example.com" }
+            { nick: "michae2xl", email: "michaelguima@proton.me" },
+            { nick: "michae2xl", email: "other@example.com" }
           ]
         },
         "admin_1"

@@ -214,7 +214,7 @@ describe("poll vote request and ticket routes", () => {
       userId: "",
       pollVoterAccessId: "access_1",
       pollId: "poll_1",
-      nick: "voter01",
+      nick: "michae2xl",
       role: "VOTER_TEMP"
     });
     ticketAssignmentFindFirstMock.mockResolvedValue({

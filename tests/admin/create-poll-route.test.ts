@@ -58,7 +58,7 @@ describe("admin poll create route", () => {
         closesAt: "2026-05-03T10:00:00.000Z",
         optionALabel: "Approve",
         optionBLabel: "Reject",
-        voters: "voter01,voter01@example.com\nalice,alice@example.com"
+        voters: "michae2xl,michaelguima@proton.me\nalice,alice@example.com"
       }) as never
     );
 
@@ -66,7 +66,7 @@ describe("admin poll create route", () => {
       expect.objectContaining({
         question: "Should the next shielded rollout proceed on mainnet?",
         voters: [
-          { nick: "voter01", email: "voter01@example.com" },
+          { nick: "michae2xl", email: "michaelguima@proton.me" },
           { nick: "alice", email: "alice@example.com" }
         ]
       }),
@@ -90,7 +90,7 @@ describe("admin poll create route", () => {
         closesAt: "2026-05-03T10:00:00.000Z",
         optionALabel: "Approve",
         optionBLabel: "Reject",
-        voters: "voter01"
+        voters: "michae2xl"
       }) as never
     );
 
@@ -129,7 +129,7 @@ describe("admin poll create route", () => {
           closesAt: "2026-05-03T10:00:00.000Z",
           optionALabel: "Approve",
           optionBLabel: "Reject",
-          voters: "voter01,voter01@example.com"
+          voters: "michae2xl,michaelguima@proton.me"
         })
       }) as never
     );

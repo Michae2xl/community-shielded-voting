@@ -346,7 +346,7 @@ describe("PollVotePage", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByRole("link", {
-        name: "https://demo.community-shielded-voting.example/polls"
+        name: "https://voting.zkglobalcredit.tech/polls"
       })
     ).toHaveAttribute("href", "/polls");
   });

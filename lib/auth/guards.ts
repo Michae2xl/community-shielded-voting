@@ -6,7 +6,7 @@ const userSessionPayloadSchema = z.object({
   subjectType: z.literal("user"),
   userId: z.string().min(1),
   nick: z.string().min(1),
-  role: z.enum(["ADMIN", "USER"])
+  role: z.enum(["ADMIN", "CREATOR", "USER"])
 });
 
 const temporaryPollVoterSessionPayloadSchema = z.object({
@@ -30,5 +30,5 @@ export type TemporaryPollVoterSessionPayload = z.infer<
 >;
 
 export function canManagePolls(role: SessionPayload["role"]) {
-  return role === "ADMIN";
+  return role === "ADMIN" || role === "CREATOR";
 }

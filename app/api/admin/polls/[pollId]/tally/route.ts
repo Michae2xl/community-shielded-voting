@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { canManagePolls } from "@/lib/auth/guards";
+import { findOwnedPoll } from "@/lib/auth/poll-ownership";
 import { readSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 
@@ -34,14 +35,7 @@ export async function GET(
   }
 
   const { pollId } = await context.params;
-  const poll = await db.poll.findUnique({
-    where: {
-      id: pollId
-    },
-    select: {
-      id: true
-    }
-  });
+  const poll = await findOwnedPoll(pollId, session.userId, { id: true });
 
   if (!poll) {
     return NextResponse.json({ error: "POLL_NOT_FOUND" }, { status: 404 });

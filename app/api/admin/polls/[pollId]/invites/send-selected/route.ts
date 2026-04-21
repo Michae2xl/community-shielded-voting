@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { ZodError, z } from "zod";
 import { canManagePolls } from "@/lib/auth/guards";
+import { findOwnedPoll } from "@/lib/auth/poll-ownership";
 import { readSession } from "@/lib/auth/session";
 import { getActiveOptionLetters } from "@/lib/domain/options";
 import { db } from "@/lib/db";
@@ -44,17 +45,14 @@ export async function POST(
   try {
     const body = bodySchema.parse(await request.json());
     const { pollId } = await context.params;
-    const poll = await db.poll.findUnique({
-      where: { id: pollId },
-      select: {
-        id: true,
-        feeZat: true,
-        optionALabel: true,
-        optionBLabel: true,
-        optionCLabel: true,
-        optionDLabel: true,
-        optionELabel: true
-      }
+    const poll = await findOwnedPoll(pollId, session.userId, {
+      id: true,
+      feeZat: true,
+      optionALabel: true,
+      optionBLabel: true,
+      optionCLabel: true,
+      optionDLabel: true,
+      optionELabel: true
     });
 
     if (!poll) {

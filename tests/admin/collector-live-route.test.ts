@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { readSessionMock, pollFindUniqueMock, readPollCollectorTallyMock } = vi.hoisted(
+const { readSessionMock, findOwnedPollMock, readPollCollectorTallyMock } = vi.hoisted(
   () => ({
     readSessionMock: vi.fn(),
-    pollFindUniqueMock: vi.fn(),
+    findOwnedPollMock: vi.fn(),
     readPollCollectorTallyMock: vi.fn()
   })
 );
@@ -16,12 +16,8 @@ vi.mock("@/lib/auth/session", () => ({
   readSession: readSessionMock
 }));
 
-vi.mock("@/lib/db", () => ({
-  db: {
-    poll: {
-      findUnique: pollFindUniqueMock
-    }
-  }
+vi.mock("@/lib/auth/poll-ownership", () => ({
+  findOwnedPoll: findOwnedPollMock
 }));
 
 vi.mock("@/lib/services/collector-tally", () => ({
@@ -36,7 +32,7 @@ import { GET } from "@/app/api/admin/polls/[pollId]/collector-live/route";
 
 beforeEach(() => {
   readSessionMock.mockReset();
-  pollFindUniqueMock.mockReset();
+  findOwnedPollMock.mockReset();
   readPollCollectorTallyMock.mockReset();
   scheduleAutoPollReconcileMock.mockReset();
 });
@@ -48,7 +44,7 @@ describe("admin collector live route", () => {
       nick: "admin",
       role: "ADMIN"
     });
-    pollFindUniqueMock.mockResolvedValue({ id: "poll_1" });
+    findOwnedPollMock.mockResolvedValue({ id: "poll_1" });
     readPollCollectorTallyMock.mockResolvedValue({
       totalConfirmed: 1,
       counts: {

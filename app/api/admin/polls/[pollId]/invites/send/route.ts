@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { canManagePolls } from "@/lib/auth/guards";
+import { creatorOwnsPoll } from "@/lib/auth/poll-ownership";
 import { readSession } from "@/lib/auth/session";
 import { getRequestOrigin } from "@/lib/http/request-url";
 import { rejectIfUntrustedWriteOrigin } from "@/lib/http/write-origin";
@@ -25,6 +26,12 @@ export async function POST(
   }
 
   const { pollId } = await context.params;
+  const ownsPoll = await creatorOwnsPoll(pollId, session.userId);
+
+  if (!ownsPoll) {
+    return NextResponse.json({ error: "POLL_NOT_FOUND" }, { status: 404 });
+  }
+
   const baseUrl = process.env.APP_BASE_URL || getRequestOrigin(request);
 
   try {

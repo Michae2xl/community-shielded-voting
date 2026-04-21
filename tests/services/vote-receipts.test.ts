@@ -36,7 +36,7 @@ import { deliverConfirmedVoteReceiptEmailsForPoll } from "@/lib/services/vote-re
 
 describe("deliverConfirmedVoteReceiptEmailsForPoll", () => {
   beforeEach(() => {
-    process.env.APP_BASE_URL = "https://demo.community-shielded-voting.example";
+    process.env.APP_BASE_URL = "https://voting.zkglobalcredit.tech";
     findManyVoteReceiptsMock.mockReset();
     findUniqueVoteTicketMock.mockReset();
     updateVoteReceiptMock.mockReset();
@@ -62,8 +62,8 @@ describe("deliverConfirmedVoteReceiptEmailsForPoll", () => {
     findUniqueVoteTicketMock.mockResolvedValue({
       assignment: {
         pollVoterAccess: {
-          nick: "voter01",
-          email: "voter01@example.com"
+          nick: "michae2xl",
+          email: "michaelguima@proton.me"
         },
         user: null
       }
@@ -80,15 +80,15 @@ describe("deliverConfirmedVoteReceiptEmailsForPoll", () => {
       failed: 0
     });
     expect(sendVoteReceiptEmailMock).toHaveBeenCalledWith({
-      to: "voter01@example.com",
+      to: "michaelguima@proton.me",
       subject: "Vote receipt · Which path should we approve?",
-      voterNick: "voter01",
+      voterNick: "michae2xl",
       pollQuestion: "Which path should we approve?",
       pollId: "poll_1",
       receiptPublicId: "receipt_public_1",
       txid: "txid_1",
       confirmedAt: "2026-04-21T03:00:00.000Z",
-      portalUrl: "https://demo.community-shielded-voting.example/polls/poll_1"
+      portalUrl: "https://voting.zkglobalcredit.tech/polls/poll_1"
     });
     expect(updateVoteReceiptMock).toHaveBeenCalledWith({
       where: {
@@ -154,8 +154,8 @@ describe("deliverConfirmedVoteReceiptEmailsForPoll", () => {
     findUniqueVoteTicketMock.mockResolvedValue({
       assignment: {
         pollVoterAccess: {
-          nick: "voter01",
-          email: "voter01@example.com"
+          nick: "michae2xl",
+          email: "michaelguima@proton.me"
         },
         user: null
       }

@@ -68,7 +68,7 @@ describe("voter poll visibility", () => {
       userId: "",
       pollVoterAccessId: "access_1",
       pollId: "poll_1",
-      nick: "voter01",
+      nick: "michae2xl",
       role: "VOTER_TEMP"
     });
     pollFindManyMock.mockResolvedValue([]);
@@ -132,7 +132,7 @@ describe("voter poll visibility", () => {
       userId: "",
       pollVoterAccessId: "access_1",
       pollId: "poll_1",
-      nick: "voter01",
+      nick: "michae2xl",
       role: "VOTER_TEMP"
     });
     pollFindFirstMock.mockResolvedValue(null);

@@ -1,4 +1,5 @@
 import { canManagePolls } from "@/lib/auth/guards";
+import { findOwnedPoll } from "@/lib/auth/poll-ownership";
 import { readSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { adminReceiptSummaryCsv, buildAdminReceiptSummary } from "@/lib/services/admin-receipts";
@@ -14,16 +15,17 @@ export async function GET(
   }
 
   const { pollId } = await context.params;
-  const poll = await db.poll.findUnique({
-    where: { id: pollId },
-    select: {
-      optionALabel: true,
-      optionBLabel: true,
-      optionCLabel: true,
-      optionDLabel: true,
-      optionELabel: true
-    }
+  const poll = await findOwnedPoll(pollId, session.userId, {
+    optionALabel: true,
+    optionBLabel: true,
+    optionCLabel: true,
+    optionDLabel: true,
+    optionELabel: true
   });
+
+  if (!poll) {
+    return new Response("poll not found", { status: 404 });
+  }
   const receipts = await db.voteReceipt.findMany({
     where: {
       pollId
@@ -34,7 +36,7 @@ export async function GET(
     }
   });
 
-  const csv = adminReceiptSummaryCsv(buildAdminReceiptSummary(poll ?? {}, receipts));
+  const csv = adminReceiptSummaryCsv(buildAdminReceiptSummary(poll, receipts));
 
   return new Response(csv, {
     headers: {
