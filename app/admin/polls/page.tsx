@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { canManagePolls } from "@/lib/auth/guards";
 import { readSession } from "@/lib/auth/session";
+import { MarkdownInline } from "@/components/markdown-text";
 import { ZcashBrandmark } from "@/components/zcash-brandmark";
 import { db } from "@/lib/db";
 
@@ -125,7 +126,9 @@ export default async function AdminPollDirectoryPage() {
                   <div className="admin-directory-row-main">
                     <div className="admin-directory-row-copy">
                       <span className="section-label">Poll {poll.id}</span>
-                      <strong>{poll.question}</strong>
+                      <strong>
+                        <MarkdownInline value={poll.question} allowLinks={false} />
+                      </strong>
                     </div>
                     <span className="status-pill">{presentStatus(poll.status)}</span>
                   </div>

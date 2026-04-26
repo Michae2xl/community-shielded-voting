@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AdminDeliveryManager } from "@/components/admin-delivery-manager";
 import { AdminVotersManager } from "@/components/admin-voters-manager";
+import { MarkdownText } from "@/components/markdown-text";
 import { OpenPollButton } from "@/components/open-poll-button";
 import { PollActionButton } from "@/components/poll-action-button";
 import { ZcashBrandmark } from "@/components/zcash-brandmark";
@@ -302,7 +303,11 @@ export default async function AdminPollPage({
                 <p className="eyebrow">Admin dashboard</p>
                 <ZcashBrandmark className="zcash-brandmark--compact" />
               </div>
-              <h1 className="editorial-title">{poll.question}</h1>
+              <MarkdownText
+                value={poll.question}
+                className="editorial-title"
+                headingLevel={1}
+              />
             </div>
             <div className="editorial-inline-actions">
               <span className="status-pill">{presentStatus(poll.status)}</span>

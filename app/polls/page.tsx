@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MarkdownInline } from "@/components/markdown-text";
 import { readSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { getPollOptionEntries } from "@/lib/domain/options";
@@ -105,7 +106,9 @@ export default async function PollsPage() {
                     <div className="poll-summary-head">
                       <div className="poll-summary-copy">
                         <p className="section-label">Live poll</p>
-                        <strong>{poll.question}</strong>
+                        <strong>
+                          <MarkdownInline value={poll.question} />
+                        </strong>
                         <span className="muted-text">Poll ID: {poll.id}</span>
                       </div>
                       <span className="meta-chip meta-chip--mint">{poll.status}</span>

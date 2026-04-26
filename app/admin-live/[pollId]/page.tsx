@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { MarkdownText } from "@/components/markdown-text";
 import { OPTION_LETTERS } from "@/lib/domain/options";
 import { readCollectorTally } from "@/lib/services/collector-tally";
 import { getLocalAdminFallbackPoll } from "@/lib/local-admin-fallback";
@@ -39,7 +40,11 @@ export default async function AdminLiveFallbackPage({
           <section className="hero-card form-panel admin-primary-panel">
             <div className="portal-body">
               <p className="eyebrow">Admin fallback</p>
-              <h1 className="portal-subheading">{poll.question}</h1>
+              <MarkdownText
+                value={poll.question}
+                className="portal-subheading"
+                headingLevel={1}
+              />
               <p className="lead">
                 Poll {poll.pollId} · {poll.status}. Local validation only, with the
                 collector read directly and no database in the path.

@@ -80,6 +80,85 @@ a {
   text-decoration: none;
 }
 
+.markdown-inline {
+  display: inline;
+}
+
+.markdown-text {
+  display: grid;
+  gap: 0.65em;
+}
+
+.markdown-text > *,
+.markdown-text p {
+  margin: 0;
+}
+
+.markdown-text ul,
+.markdown-text ol {
+  margin: 0;
+  padding-left: 1.25em;
+}
+
+.markdown-text li + li {
+  margin-top: 0.32em;
+}
+
+.markdown-text blockquote {
+  margin: 0;
+  border-left: 2px solid var(--line-strong);
+  padding-left: 0.85em;
+  color: var(--ink-secondary);
+}
+
+.markdown-heading {
+  margin: 0;
+  font-family: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+}
+
+.markdown-text--heading {
+  gap: 0.24em;
+}
+
+.markdown-text--heading p,
+.markdown-text--heading ul,
+.markdown-text--heading ol,
+.markdown-text--heading blockquote,
+.markdown-text--heading .markdown-heading {
+  font: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  max-width: inherit;
+  text-transform: inherit;
+}
+
+.markdown-text--heading ul,
+.markdown-text--heading ol {
+  padding-left: 1em;
+}
+
+.markdown-inline a,
+.markdown-text a {
+  color: var(--accent-mint-bright);
+  text-decoration: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.16em;
+}
+
+.markdown-inline code,
+.markdown-text code {
+  border: 1px solid var(--line-primary);
+  border-radius: 5px;
+  background: rgba(255, 251, 245, 0.72);
+  padding: 0.05em 0.3em;
+  font-family: var(--font-technical);
+  font-size: 0.88em;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
 button,
 input,
 textarea,

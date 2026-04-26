@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AnswerGrid, type AnswerGridOption } from "@/components/answer-grid";
+import { MarkdownText } from "@/components/markdown-text";
 import { QrCard } from "@/components/qr-card";
 import type { OptionLetter } from "@/lib/domain/options";
 
@@ -385,7 +386,7 @@ export default function PollVotePageClient({
         <header className="hero-card workspace-header">
           <div className="workspace-header-copy">
             <p className="eyebrow">Vote</p>
-            <h1 className="workspace-title">{heading}</h1>
+            <MarkdownText value={heading} className="workspace-title" headingLevel={1} />
             <p className="workspace-copy">{statusCopy}</p>
           </div>
           <div className="meta-chip-row">
