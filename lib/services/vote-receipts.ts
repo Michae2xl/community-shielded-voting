@@ -2,6 +2,7 @@ import {
   isEmailDeliveryConfigured,
   sendVoteReceiptEmail
 } from "@/lib/email/resend";
+import { buildPollEmailSubject } from "@/lib/email/content";
 import { db } from "@/lib/db";
 
 function buildPortalUrl(pollId: string) {
@@ -88,7 +89,7 @@ export async function deliverConfirmedVoteReceiptEmailsForPoll(pollId: string) {
     try {
       const delivery = await sendVoteReceiptEmail({
         to: recipient.email,
-        subject: `Vote receipt · ${receipt.poll.question}`,
+        subject: buildPollEmailSubject("Vote receipt", receipt.poll.question),
         voterNick: recipient.nick,
         pollQuestion: receipt.poll.question,
         pollId: receipt.pollId,

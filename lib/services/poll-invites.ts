@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { generateInviteToken } from "@/lib/domain/invites";
+import { buildPollEmailSubject } from "@/lib/email/content";
 import {
   isEmailDeliveryConfigured,
   sendPollInviteEmail
@@ -119,7 +120,7 @@ export async function sendPollInvites(input: {
     try {
       const delivery = await sendPollInviteEmail({
         to: user.email,
-        subject: `Vote invitation · ${poll.question}`,
+        subject: buildPollEmailSubject("Vote invitation", poll.question),
         pollQuestion: poll.question,
         voterNick: user.nick,
         loginNick: user.nick,
@@ -180,7 +181,7 @@ export async function sendPollInvites(input: {
     try {
       const delivery = await sendPollInviteEmail({
         to: access.email,
-        subject: `Vote invitation · ${poll.question}`,
+        subject: buildPollEmailSubject("Vote invitation", poll.question),
         pollQuestion: poll.question,
         voterNick: access.nick,
         loginNick: access.nick,

@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { buildPollQuestionEmailHtml, escapeHtml } from "@/lib/email/content";
 
 type PollInviteEmailInput = {
   to: string;
@@ -59,15 +60,6 @@ function getResendClient() {
   }
 
   return new Resend(apiKey);
-}
-
-function escapeHtml(value: string) {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
 }
 
 function getOrigin(inputUrl?: string) {
@@ -199,7 +191,7 @@ function buildInviteHtml(input: PollInviteEmailInput) {
     intro: `Hello ${input.voterNick}, your shielded poll access is ready.`,
     detailHtml: credentialBlock,
     infoHtml: `
-      <p style="margin:0 0 12px;color:#38281b;font-size:16px;line-height:1.7;font-family:Arial,sans-serif;"><strong>Question:</strong> ${escapeHtml(input.pollQuestion)}</p>
+      ${buildPollQuestionEmailHtml(input.pollQuestion)}
       <p style="margin:0;color:#6b5843;font-size:14px;line-height:1.7;font-family:Arial,sans-serif;"><strong>Voting window:</strong> ${escapeHtml(input.opensAt)} to ${escapeHtml(input.closesAt)}</p>
     `,
     actionLabel: "Open voting portal",
@@ -244,7 +236,7 @@ function buildVoteReceiptHtml(input: VoteReceiptEmailInput) {
     title: "Vote receipt confirmed",
     intro: `Hello ${input.voterNick}, your shielded vote now has one on-chain confirmation.`,
     infoHtml: `
-      <p style="margin:0 0 12px;color:#38281b;font-size:16px;line-height:1.7;font-family:Arial,sans-serif;"><strong>Question:</strong> ${escapeHtml(input.pollQuestion)}</p>
+      ${buildPollQuestionEmailHtml(input.pollQuestion)}
       <div>
         <p style="margin:0;color:#6b5843;font-size:14px;line-height:1.7;font-family:Arial,sans-serif;"><strong>Receipt ID:</strong> ${escapeHtml(input.receiptPublicId)}</p>
         <p style="margin:0;color:#6b5843;font-size:14px;line-height:1.7;font-family:Arial,sans-serif;"><strong>Poll ID:</strong> ${escapeHtml(input.pollId)}</p>
