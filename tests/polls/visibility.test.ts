@@ -49,6 +49,9 @@ describe("voter poll visibility", () => {
       expect.objectContaining({
         where: {
           status: "OPEN"
+        },
+        orderBy: {
+          createdAt: "desc"
         }
       })
     );
@@ -57,6 +60,9 @@ describe("voter poll visibility", () => {
       expect.objectContaining({
         where: {
           status: "OPEN"
+        },
+        orderBy: {
+          createdAt: "desc"
         }
       })
     );
@@ -81,6 +87,9 @@ describe("voter poll visibility", () => {
       expect.objectContaining({
         where: {
           status: "OPEN"
+        },
+        orderBy: {
+          createdAt: "desc"
         }
       })
     );
@@ -89,6 +98,9 @@ describe("voter poll visibility", () => {
       expect.objectContaining({
         where: {
           status: "OPEN"
+        },
+        orderBy: {
+          createdAt: "desc"
         }
       })
     );
@@ -217,5 +229,56 @@ describe("voter poll visibility", () => {
     expect(screen.getByText("Poll ID: poll_2")).toBeInTheDocument();
     expect(screen.getByText("0 valid votes")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Which option should we fund?" })).not.toBeInTheDocument();
+  });
+
+  it("renders newest polls first on the public board", async () => {
+    readSessionMock.mockResolvedValue(null);
+    pollFindManyMock.mockResolvedValue([
+      {
+        id: "poll_new",
+        question: "Newest poll",
+        status: "OPEN",
+        optionALabel: "Yes",
+        optionBLabel: "No",
+        optionCLabel: null,
+        optionDLabel: null,
+        optionELabel: null,
+        tally: {
+          totalConfirmed: 0,
+          countA: 0,
+          countB: 0,
+          countC: 0,
+          countD: 0,
+          countE: 0
+        }
+      },
+      {
+        id: "poll_old",
+        question: "Older poll",
+        status: "OPEN",
+        optionALabel: "Yes",
+        optionBLabel: "No",
+        optionCLabel: null,
+        optionDLabel: null,
+        optionELabel: null,
+        tally: {
+          totalConfirmed: 0,
+          countA: 0,
+          countB: 0,
+          countC: 0,
+          countD: 0,
+          countE: 0
+        }
+      }
+    ]);
+
+    render(await PollsPage());
+
+    const newest = screen.getByText("Newest poll");
+    const older = screen.getByText("Older poll");
+
+    expect(
+      newest.compareDocumentPosition(older) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
   });
 });

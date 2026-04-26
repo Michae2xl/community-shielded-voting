@@ -1,5 +1,6 @@
 import { after } from "next/server";
 import { syncPollLifecycleForPoll } from "@/lib/services/poll-lifecycle";
+import { syncObservedVoteAuditEvents } from "@/lib/services/public-audit-events";
 import { reconcilePollVotes } from "@/lib/services/poll-reconcile";
 import { getZkoolClient } from "@/lib/zcash/zkool-client";
 
@@ -50,6 +51,14 @@ export async function runAutoPollReconcile(pollId: string) {
     try {
       await syncPollLifecycleForPoll(pollId);
       await zkoolClient.syncWallet();
+      try {
+        await syncObservedVoteAuditEvents({ pollId });
+      } catch (error) {
+        console.error("Failed to sync observed public audit events", {
+          pollId,
+          error
+        });
+      }
       await reconcilePollVotes(pollId);
     } catch (error) {
       console.error("Failed to auto-reconcile poll", {

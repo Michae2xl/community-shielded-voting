@@ -71,6 +71,12 @@ enum VoteOptionLetter {
   E
 }
 
+enum PublicAuditEventType {
+  POLL_CREATED
+  VOTE_OBSERVED
+  VOTE_CONFIRMED
+}
+
 model User {
   id           String            @id @default(cuid())
   nick         String            @unique
@@ -111,6 +117,7 @@ model Poll {
   invites      PollInvite[]
   voterAccesses PollVoterAccess[]
   tally        PollTally?
+  publicAuditEvents PublicAuditEvent[]
 }
 
 model PollEligibility {
@@ -241,4 +248,18 @@ model PollTally {
   totalConfirmed Int      @default(0)
   updatedAt      DateTime @updatedAt
   poll           Poll     @relation(fields: [pollId], references: [id], onDelete: Cascade)
+}
+
+model PublicAuditEvent {
+  id        String               @id @default(cuid())
+  pollId    String
+  eventType PublicAuditEventType
+  sourceKey String               @unique
+  summary   String
+  txid      String?
+  createdAt DateTime             @default(now())
+  poll      Poll                 @relation(fields: [pollId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([pollId, createdAt])
 }

@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mapTallyResponse } from "@/app/api/admin/polls/[pollId]/tally/route";
 
-const { readSessionMock, pollFindUniqueMock, pollTallyFindUniqueMock } = vi.hoisted(
+const { readSessionMock, pollFindFirstMock, pollTallyFindUniqueMock } = vi.hoisted(
   () => ({
     readSessionMock: vi.fn(),
-    pollFindUniqueMock: vi.fn(),
+    pollFindFirstMock: vi.fn(),
     pollTallyFindUniqueMock: vi.fn()
   })
 );
@@ -16,7 +16,7 @@ vi.mock("@/lib/auth/session", () => ({
 vi.mock("@/lib/db", () => ({
   db: {
     poll: {
-      findUnique: pollFindUniqueMock
+      findFirst: pollFindFirstMock
     },
     pollTally: {
       findUnique: pollTallyFindUniqueMock
@@ -28,7 +28,7 @@ import { GET as getTally } from "@/app/api/admin/polls/[pollId]/tally/route";
 
 beforeEach(() => {
   readSessionMock.mockReset();
-  pollFindUniqueMock.mockReset();
+  pollFindFirstMock.mockReset();
   pollTallyFindUniqueMock.mockReset();
 });
 
@@ -56,7 +56,7 @@ describe("GET /api/admin/polls/[pollId]/tally", () => {
       nick: "alice",
       role: "ADMIN"
     });
-    pollFindUniqueMock.mockResolvedValue({ id: "poll_1" });
+    pollFindFirstMock.mockResolvedValue({ id: "poll_1" });
     pollTallyFindUniqueMock.mockResolvedValue(null);
 
     const response = await getTally(

@@ -23,7 +23,7 @@ export default async function PollsPage() {
       status: "OPEN" as const
     },
     orderBy: {
-      opensAt: "asc"
+      createdAt: "desc"
     },
     select: {
       id: true,

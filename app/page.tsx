@@ -108,7 +108,12 @@ export function HomePageContent({
 }
 
 export default async function HomePage() {
-  const events = await readPublicAuditFeed();
+  const events = await readPublicAuditFeed().catch(() => []);
 
-  return <HomePageContent events={events} allowSampleFallback={process.env.NODE_ENV !== "production"} />;
+  return (
+    <HomePageContent
+      events={events}
+      allowSampleFallback={process.env.NODE_ENV !== "production"}
+    />
+  );
 }

@@ -5,6 +5,10 @@ import {
   type VoteOptionLetter
 } from "@prisma/client";
 import { db } from "@/lib/db";
+import {
+  recordConfirmedVoteAuditEvent,
+  syncObservedVoteAuditEvents
+} from "@/lib/services/public-audit-events";
 import { reconcileReceipt } from "@/lib/services/reconcile";
 import { deliverConfirmedVoteReceiptEmailsForPoll } from "@/lib/services/vote-receipts";
 import { getZkoolClient } from "@/lib/zcash/zkool-client";
@@ -100,6 +104,15 @@ export async function reconcilePollVotes(pollId: string) {
     });
 
     try {
+      let confirmedAuditEvent:
+        | {
+            pollId: string;
+            txid: string;
+            amountZat: bigint;
+            createdAt?: Date;
+          }
+        | null = null;
+
       await db.$transaction(async (tx) => {
         let receiptStatus = baseDecision.status;
         let rejectionReason = baseDecision.rejectionReason;
@@ -146,6 +159,13 @@ export async function reconcilePollVotes(pollId: string) {
         });
 
         if (receiptStatus === VoteReceiptStatus.CONFIRMED) {
+          confirmedAuditEvent = {
+            pollId,
+            txid: note.txid,
+            amountZat: note.amountZat,
+            createdAt: confirmedAt ?? undefined
+          };
+
           await tx.voteRequest.updateMany({
             where: {
               ticketId: ticket.id,
@@ -177,6 +197,18 @@ export async function reconcilePollVotes(pollId: string) {
         }
       });
 
+      if (confirmedAuditEvent) {
+        try {
+          await recordConfirmedVoteAuditEvent(confirmedAuditEvent);
+        } catch (error) {
+          console.error("Failed to record public audit vote-confirmed event", {
+            pollId,
+            txid: note.txid,
+            error
+          });
+        }
+      }
+
       processed += 1;
     } catch (error) {
       if (isUniqueConstraintError(error)) {
@@ -206,6 +238,12 @@ export async function runCollectorCycle() {
 
   const lifecycle = await syncAllPollLifecycles();
   await getZkoolClient().syncWallet();
+
+  try {
+    await syncObservedVoteAuditEvents();
+  } catch (error) {
+    console.error("Failed to sync observed public audit events", { error });
+  }
 
   const openPolls = await db.poll.findMany({
     where: {

@@ -15,7 +15,7 @@ export async function GET() {
       status: "OPEN"
     },
     orderBy: {
-      opensAt: "asc"
+      createdAt: "desc"
     },
     select: {
       id: true,

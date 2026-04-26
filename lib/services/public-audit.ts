@@ -1,5 +1,4 @@
 import { db } from "@/lib/db";
-import { getZkoolClient } from "@/lib/zcash/zkool-client";
 
 export type PublicAuditEvent = {
   id: string;
@@ -11,6 +10,19 @@ export type PublicAuditEvent = {
   isLive?: boolean;
   isSample?: boolean;
 };
+
+function mapAuditEventType(
+  eventType: "POLL_CREATED" | "VOTE_OBSERVED" | "VOTE_CONFIRMED"
+): PublicAuditEvent["type"] {
+  switch (eventType) {
+    case "POLL_CREATED":
+      return "poll_created";
+    case "VOTE_OBSERVED":
+      return "vote_observed";
+    case "VOTE_CONFIRMED":
+      return "vote_confirmed";
+  }
+}
 
 const SAMPLE_PUBLIC_AUDIT_EVENTS: PublicAuditEvent[] = [
   {
@@ -77,7 +89,21 @@ export async function readPublicAuditFeed(limit = 9): Promise<PublicAuditEvent[]
   }
 
   try {
-    const [polls, confirmedReceipts, tallies] = await Promise.all([
+    const [materializedEvents, polls, confirmedReceipts, tallies] = await Promise.all([
+      db.publicAuditEvent.findMany({
+        orderBy: {
+          createdAt: "desc"
+        },
+        take: Math.max(limit * 2, 12),
+        select: {
+          eventType: true,
+          pollId: true,
+          sourceKey: true,
+          summary: true,
+          txid: true,
+          createdAt: true
+        }
+      }),
       db.poll.findMany({
         where: {
           status: {
@@ -133,8 +159,17 @@ export async function readPublicAuditFeed(limit = 9): Promise<PublicAuditEvent[]
 
     const receiptPollIds = new Set(confirmedReceipts.map((receipt) => receipt.pollId));
     const events: PublicAuditEvent[] = [
+      ...materializedEvents.map((event) => ({
+        id: event.sourceKey,
+        type: mapAuditEventType(event.eventType),
+        pollId: event.pollId,
+        timestamp: safeTimestamp(event.createdAt),
+        summary: event.summary,
+        txid: event.txid ?? undefined,
+        isLive: event.eventType === "VOTE_OBSERVED"
+      })),
       ...polls.map((poll) => ({
-        id: `poll-${poll.id}`,
+        id: `poll_created:${poll.id}:${poll.anchorTxid ?? safeTimestamp(poll.createdAt)}`,
         type: "poll_created" as const,
         pollId: poll.id,
         timestamp: safeTimestamp(poll.createdAt),
@@ -144,7 +179,7 @@ export async function readPublicAuditFeed(limit = 9): Promise<PublicAuditEvent[]
         txid: poll.anchorTxid ?? undefined
       })),
       ...confirmedReceipts.map((receipt) => ({
-        id: `confirmed-${receipt.id}`,
+        id: `vote_confirmed:${receipt.txid}`,
         type: "vote_confirmed" as const,
         pollId: receipt.pollId,
         timestamp: safeTimestamp(receipt.confirmedAt),
@@ -164,60 +199,11 @@ export async function readPublicAuditFeed(limit = 9): Promise<PublicAuditEvent[]
               : `${tally.totalConfirmed} valid votes reconciled on the public tally.`
       }))
     ];
+    const deduped = Array.from(
+      new Map(events.map((event) => [event.id, event])).values()
+    );
 
-    if (getZkoolClient().isConfigured()) {
-      try {
-        const observedNotes = await getZkoolClient().fetchIncomingVotes({
-          minConfirmations: 0
-        });
-        const confirmedTxids = new Set(confirmedReceipts.map((receipt) => receipt.txid));
-        const candidateNotes = observedNotes.filter((note) => !confirmedTxids.has(note.txid));
-
-        if (candidateNotes.length > 0) {
-          const requests = await db.voteRequest.findMany({
-            where: {
-              shieldedAddress: {
-                in: candidateNotes.map((note) => note.shieldedAddress)
-              }
-            },
-            select: {
-              shieldedAddress: true,
-              ticket: {
-                select: {
-                  pollId: true
-                }
-              }
-            }
-          });
-
-          const pollByAddress = new Map(
-            requests.map((request) => [request.shieldedAddress, request.ticket.pollId])
-          );
-
-          for (const note of candidateNotes) {
-            const pollId = pollByAddress.get(note.shieldedAddress);
-
-            if (!pollId) {
-              continue;
-            }
-
-            events.push({
-              id: `observed-${note.txid}`,
-              type: "vote_observed",
-              pollId,
-              timestamp: new Date().toISOString(),
-              summary: "Vote payment observed. Awaiting one-block confirmation.",
-              txid: note.txid,
-              isLive: true
-            });
-          }
-        }
-      } catch {
-        // Ignore audit observation failures and keep the homepage feed available.
-      }
-    }
-
-    return fillPublicAuditFeed(events, limit, 3, allowSamples);
+    return fillPublicAuditFeed(deduped, limit, 3, allowSamples);
   } catch {
     return fillPublicAuditFeed([], limit, 3, allowSamples);
   }

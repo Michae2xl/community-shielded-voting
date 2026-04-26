@@ -5,6 +5,7 @@ import { generateInviteToken } from "@/lib/domain/invites";
 import { getDefaultPollFeeZat } from "@/lib/config/polls";
 import { db } from "@/lib/db";
 import { normalizeOptionLabel } from "@/lib/domain/options";
+import { recordPollCreatedAuditEvent } from "@/lib/services/public-audit-events";
 
 export class PollServiceError extends Error {
   constructor(
@@ -183,6 +184,19 @@ export async function markPollAnchoring(pollId: string, txid: string) {
       409,
       "POLL_NOT_ANCHORING"
     );
+  }
+
+  try {
+    await recordPollCreatedAuditEvent({
+      pollId,
+      txid
+    });
+  } catch (error) {
+    console.error("Failed to record public audit poll-created event", {
+      pollId,
+      txid,
+      error
+    });
   }
 
   return updated;
