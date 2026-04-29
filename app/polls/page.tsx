@@ -3,6 +3,10 @@ import { MarkdownInline } from "@/components/markdown-text";
 import { readSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { getPollOptionEntries } from "@/lib/domain/options";
+import {
+  getDisplayUrlLabel,
+  splitPollReferences
+} from "@/lib/domain/poll-references";
 
 function formatVoteCount(totalConfirmed: number) {
   return `${totalConfirmed} valid vote${totalConfirmed === 1 ? "" : "s"}`;
@@ -92,6 +96,7 @@ export default async function PollsPage() {
           <div className="stack">
             {polls.length ? (
               polls.map((poll) => {
+                const questionParts = splitPollReferences(poll.question, `Poll ${poll.id}`);
                 const tally = poll.tally ?? {
                   totalConfirmed: 0,
                   countA: 0,
@@ -107,11 +112,36 @@ export default async function PollsPage() {
                       <div className="poll-summary-copy">
                         <p className="section-label">Live poll</p>
                         <strong>
-                          <MarkdownInline value={poll.question} />
+                          <MarkdownInline value={questionParts.title} />
                         </strong>
+                        {questionParts.references.length ? (
+                          <div
+                            className="vote-reference-row poll-summary-reference-row"
+                            aria-label="Poll references"
+                          >
+                            {questionParts.references.map((reference, index) => (
+                              <a
+                                key={`${poll.id}-${reference}-${index}`}
+                                className="vote-reference-link"
+                                href={reference}
+                                rel="noopener noreferrer"
+                                target="_blank"
+                                title={reference}
+                              >
+                                <span className="vote-reference-label">Reference link</span>
+                                <span className="vote-reference-domain">
+                                  {getDisplayUrlLabel(reference)}
+                                </span>
+                                <span className="vote-reference-action">Open</span>
+                              </a>
+                            ))}
+                          </div>
+                        ) : null}
                         <span className="muted-text">Poll ID: {poll.id}</span>
                       </div>
-                      <span className="meta-chip meta-chip--mint">{poll.status}</span>
+                      <span className="meta-chip meta-chip--mint poll-summary-status">
+                        {poll.status}
+                      </span>
                     </div>
                     <p className="poll-summary-total">
                       {formatVoteCount(tally.totalConfirmed)}

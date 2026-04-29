@@ -231,6 +231,48 @@ describe("voter poll visibility", () => {
     expect(screen.queryByRole("link", { name: "Which option should we fund?" })).not.toBeInTheDocument();
   });
 
+  it("renders raw poll URLs as compact reference links on the public board", async () => {
+    const referenceUrl =
+      "https://daodao.zone/dao/juno1nktrulhakwmon3wlyajpwxyg54n39xx4y8hdaqlty7my/proposals/A145";
+
+    readSessionMock.mockResolvedValue(null);
+    pollFindManyMock.mockResolvedValue([
+      {
+        id: "poll_1",
+        question: `Virtual Zcash Developer Workshop & IRL Developer Roundtable ${referenceUrl}`,
+        status: "OPEN",
+        optionALabel: "Approve",
+        optionBLabel: "Reject",
+        optionCLabel: null,
+        optionDLabel: null,
+        optionELabel: null,
+        tally: {
+          totalConfirmed: 3,
+          countA: 3,
+          countB: 0,
+          countC: 0,
+          countD: 0,
+          countE: 0
+        }
+      }
+    ]);
+
+    render(await PollsPage());
+
+    expect(
+      screen.getByText("Virtual Zcash Developer Workshop & IRL Developer Roundtable")
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/juno1nktrulhakwmon3wlyajpwxyg54n39xx4y8hdaqlty7my/)).not.toBeInTheDocument();
+
+    const referenceLink = screen.getByRole("link", {
+      name: /reference link daodao\.zone open/i
+    });
+    expect(referenceLink).toHaveAttribute("href", referenceUrl);
+    expect(referenceLink).toHaveAttribute("target", "_blank");
+    expect(referenceLink).toHaveAttribute("rel", "noopener noreferrer");
+    expect(screen.getByText("OPEN")).toHaveClass("poll-summary-status");
+  });
+
   it("renders newest polls first on the public board", async () => {
     readSessionMock.mockResolvedValue(null);
     pollFindManyMock.mockResolvedValue([
