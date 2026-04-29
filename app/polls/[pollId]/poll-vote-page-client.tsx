@@ -423,7 +423,11 @@ export default function PollVotePageClient({
                     target="_blank"
                     title={reference}
                   >
-                    {getDisplayUrlLabel(reference)}
+                    <span className="vote-reference-label">Reference link</span>
+                    <span className="vote-reference-domain">
+                      {getDisplayUrlLabel(reference)}
+                    </span>
+                    <span className="vote-reference-action">Open</span>
                   </a>
                 ))}
               </div>

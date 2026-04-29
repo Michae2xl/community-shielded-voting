@@ -153,7 +153,9 @@ describe("PollVotePage", () => {
     ).toBeInTheDocument();
     expect(screen.queryByText(/juno1nktrulhakwmon3wlyajpwxyg54n39xx4y8hdaqlty7my/)).not.toBeInTheDocument();
 
-    const referenceLink = screen.getByRole("link", { name: "daodao.zone" });
+    const referenceLink = screen.getByRole("link", {
+      name: /reference link daodao\.zone open/i
+    });
     expect(referenceLink).toHaveAttribute("href", referenceUrl);
     expect(referenceLink).toHaveAttribute("target", "_blank");
     expect(referenceLink).toHaveAttribute("rel", "noopener noreferrer");
