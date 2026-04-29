@@ -13,7 +13,10 @@ import {
 import { readSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { canRevealPollResults } from "@/lib/domain/results-visibility";
-import { buildAdminVoterRows } from "@/lib/domain/admin-voter-rows";
+import {
+  buildAdminTurnout,
+  buildAdminVoterRows
+} from "@/lib/domain/admin-voter-rows";
 import { buildAdminReceiptSummary } from "@/lib/services/admin-receipts";
 import { readPollCollectorTally } from "@/lib/services/collector-tally";
 import { getZkoolClient } from "@/lib/zcash/zkool-client";
@@ -255,13 +258,7 @@ export default async function AdminPollPage({
   const failedInviteCount = poll.invites.filter(
     (invite) => invite.status === "FAILED"
   ).length;
-  const completedVoterCount = resultsVisible
-    ? poll.voterAccesses.filter((access) =>
-        access.assignments.some(
-          (assignment) => assignment.ticket.status === "VOTED"
-        )
-      ).length
-    : null;
+  const turnout = buildAdminTurnout(poll.voterAccesses);
   const emailDeliveryConfigured = Boolean(
     process.env.RESEND_API_KEY && process.env.RESEND_FROM_EMAIL
   );
@@ -311,13 +308,13 @@ export default async function AdminPollPage({
               <p>{hasSentInvites ? "Initial invites already went out." : "Initial invites still pending."}</p>
             </article>
             <article className="editorial-note-card">
-              <span className="section-label">Voters</span>
-              <strong>
+              <span className="section-label">Turnout</span>
+              <strong>{turnout.label}</strong>
+              <p>
                 {resultsVisible
-                  ? `${completedVoterCount}/${poll.voterAccesses.length} completed`
-                  : "Hidden until close"}
-              </strong>
-              <p>{sentInviteCount} invite(s) sent so far.</p>
+                  ? "Individual completion is now visible."
+                  : "Individual completion stays hidden until close."}
+              </p>
             </article>
           </div>
           <div className="editorial-tab-row" role="tablist" aria-label="Poll dashboard tabs">
@@ -423,14 +420,7 @@ export default async function AdminPollPage({
                 <MetricCard label="Sent" value={sentInviteCount} />
                 <MetricCard label="Opened" value={openedInviteCount} />
                 <MetricCard label="Failed" value={failedInviteCount} />
-                <MetricCard
-                  label="Completed voters"
-                  value={
-                    resultsVisible
-                      ? `${completedVoterCount}/${poll.voterAccesses.length}`
-                      : "Hidden"
-                  }
-                />
+                <MetricCard label="Votes received" value={turnout.label} />
               </div>
             </section>
           </div>
@@ -452,7 +442,8 @@ export default async function AdminPollPage({
             </p>
             {!resultsVisible ? (
               <p className="muted-text">
-                Vote completion is hidden here until this poll is closed or finalized.
+                Aggregate turnout is {turnout.label}. Individual voter completion is
+                hidden here until this poll is closed or finalized.
               </p>
             ) : null}
             <AdminVotersManager pollId={poll.id} rows={voterRows} />
@@ -475,8 +466,9 @@ export default async function AdminPollPage({
             </p>
             {!resultsVisible ? (
               <p className="muted-text">
-                Delivery status stays visible for operations, but voter completion is
-                hidden until this poll is closed or finalized.
+                Aggregate turnout is {turnout.label}. Delivery status stays visible
+                for operations, but individual voter completion is hidden until this
+                poll is closed or finalized.
               </p>
             ) : null}
             <AdminDeliveryManager pollId={poll.id} rows={voterRows} />
@@ -496,14 +488,15 @@ export default async function AdminPollPage({
                 <span className="status-pill">Embargoed</span>
               </div>
               <p className="editorial-copy editorial-copy--wide">
-                The system can continue reconciling receipts, but answer totals
-                and voter completion stay hidden from admin until the poll is
-                finalized.
+                The system can continue reconciling receipts and showing aggregate
+                turnout, but answer totals and individual voter completion stay
+                hidden from admin until the poll is finalized.
               </p>
               <div className="editorial-metric-grid">
                 <MetricCard label="Unlock condition" value="Close or finalize poll" />
                 <MetricCard label="Scheduled close" value={formatDateTime(poll.closesAt)} />
-                <MetricCard label="Voter completion" value="Hidden" />
+                <MetricCard label="Votes received" value={turnout.label} />
+                <MetricCard label="Individual completion" value="Hidden" />
                 <MetricCard label="Answer totals" value="Hidden" />
               </div>
             </section>

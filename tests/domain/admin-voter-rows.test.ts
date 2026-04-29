@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { buildAdminVoterRows } from "@/lib/domain/admin-voter-rows";
+import {
+  buildAdminTurnout,
+  buildAdminVoterRows
+} from "@/lib/domain/admin-voter-rows";
 
 describe("buildAdminVoterRows", () => {
   it("masks completed voter status before results are released", () => {
@@ -57,5 +60,33 @@ describe("buildAdminVoterRows", () => {
     expect(row.inviteStatus).toBe("Failed");
     expect(row.statusTone).toBe("warning");
     expect(row.canSelect).toBe(true);
+  });
+});
+
+describe("buildAdminTurnout", () => {
+  it("returns aggregate vote count and turnout percentage", () => {
+    const turnout = buildAdminTurnout([
+      {
+        id: "access_1",
+        nick: "michae2xl",
+        email: "michaelguima@proton.me",
+        invites: [{ status: "SENT" }],
+        assignments: [{ ticket: { status: "VOTED" } }]
+      },
+      {
+        id: "access_2",
+        nick: "alice",
+        email: "alice@example.com",
+        invites: [{ status: "SENT" }],
+        assignments: [{ ticket: { status: "ISSUED" } }]
+      }
+    ]);
+
+    expect(turnout).toEqual({
+      completed: 1,
+      total: 2,
+      percent: 50,
+      label: "1/2 received (50%)"
+    });
   });
 });

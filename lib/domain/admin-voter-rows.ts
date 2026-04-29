@@ -22,6 +22,28 @@ export type AdminVoterRow = {
   canSelect: boolean;
 };
 
+export type AdminTurnout = {
+  completed: number;
+  total: number;
+  percent: number;
+  label: string;
+};
+
+export function buildAdminTurnout(accesses: AdminVoterAccessInput[]): AdminTurnout {
+  const total = accesses.length;
+  const completed = accesses.filter((access) =>
+    access.assignments.some((assignment) => assignment.ticket.status === "VOTED")
+  ).length;
+  const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+  return {
+    completed,
+    total,
+    percent,
+    label: `${completed}/${total} received (${percent}%)`
+  };
+}
+
 function visibleInviteStatus(inviteStatuses: string[]) {
   if (inviteStatuses.includes("OPENED")) {
     return "Opened";
