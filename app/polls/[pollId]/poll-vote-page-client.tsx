@@ -386,7 +386,11 @@ export default function PollVotePageClient({
         <header className="hero-card workspace-header">
           <div className="workspace-header-copy">
             <p className="eyebrow">Vote</p>
-            <MarkdownText value={heading} className="workspace-title" headingLevel={1} />
+            <MarkdownText
+              value={heading}
+              className="workspace-title vote-question-title"
+              headingLevel={1}
+            />
             <p className="workspace-copy">{statusCopy}</p>
           </div>
           <div className="meta-chip-row">

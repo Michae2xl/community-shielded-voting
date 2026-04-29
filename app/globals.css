@@ -861,6 +861,19 @@ button[type="submit"] {
   text-wrap: balance;
 }
 
+.vote-question-title {
+  max-width: min(100%, 58rem);
+  font-size: 2.6rem;
+  line-height: 1.06;
+  letter-spacing: 0;
+  text-wrap: wrap;
+}
+
+.vote-question-title a {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 .workspace-copy {
   max-width: 46rem;
   color: rgba(61, 43, 25, 0.78);
@@ -1328,6 +1341,11 @@ button[type="submit"] {
   .workspace-title,
   .portal-subheading {
     font-size: 2.2rem;
+  }
+
+  .vote-question-title {
+    font-size: 1.7rem;
+    line-height: 1.12;
   }
 
   .field-grid,
