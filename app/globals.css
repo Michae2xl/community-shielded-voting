@@ -874,6 +874,33 @@ button[type="submit"] {
   word-break: break-word;
 }
 
+.vote-reference-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.vote-reference-link {
+  max-width: 100%;
+  min-height: 34px;
+  color: var(--accent-brass-soft);
+  font-family: var(--font-technical);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: rgba(255, 251, 245, 0.82);
+  border: 1px solid var(--line-primary);
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .workspace-copy {
   max-width: 46rem;
   color: rgba(61, 43, 25, 0.78);

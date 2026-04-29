@@ -8,6 +8,7 @@ import { QrCard } from "@/components/qr-card";
 import type { OptionLetter } from "@/lib/domain/options";
 
 const VOTE_PAGE_REFRESH_MS = 3000;
+const RAW_URL_PATTERN = /https?:\/\/[^\s<>()]+/g;
 
 type PollResponse = {
   poll: {
@@ -78,6 +79,25 @@ function shouldKeepRefreshing(state: VotePageState) {
     state.kind === "awaiting_confirmation" ||
     state.kind === "no_requests"
   );
+}
+
+function getDisplayUrlLabel(value: string) {
+  try {
+    const parsed = new URL(value);
+    return parsed.hostname.replace(/^www\./, "");
+  } catch {
+    return "Reference";
+  }
+}
+
+function splitHeadingReferences(value: string, fallback: string) {
+  const references = Array.from(value.matchAll(RAW_URL_PATTERN), (match) => match[0]);
+  const title = value.replace(RAW_URL_PATTERN, " ").replace(/\s+/g, " ").trim();
+
+  return {
+    references,
+    title: title || fallback
+  };
 }
 
 function formatLocalDateTime(value: string) {
@@ -325,6 +345,7 @@ export default function PollVotePageClient({
     state.kind === "loading" || state.kind === "access_error" || state.kind === "not_found"
       ? `Poll ${pollId}`
       : poll?.question ?? `Poll ${pollId}`;
+  const headingParts = splitHeadingReferences(heading, `Poll ${pollId}`);
   const statusCopy =
     state.kind === "loading"
       ? `Loading access for ${pollId} and preparing your shielded voting session.`
@@ -387,10 +408,26 @@ export default function PollVotePageClient({
           <div className="workspace-header-copy">
             <p className="eyebrow">Vote</p>
             <MarkdownText
-              value={heading}
+              value={headingParts.title}
               className="workspace-title vote-question-title"
               headingLevel={1}
             />
+            {headingParts.references.length ? (
+              <div className="vote-reference-row" aria-label="Poll references">
+                {headingParts.references.map((reference, index) => (
+                  <a
+                    key={`${reference}-${index}`}
+                    className="vote-reference-link"
+                    href={reference}
+                    rel="noopener noreferrer"
+                    target="_blank"
+                    title={reference}
+                  >
+                    {getDisplayUrlLabel(reference)}
+                  </a>
+                ))}
+              </div>
+            ) : null}
             <p className="workspace-copy">{statusCopy}</p>
           </div>
           <div className="meta-chip-row">

@@ -109,6 +109,56 @@ describe("PollVotePage", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("renders raw poll URLs as safe compact links outside the main heading", async () => {
+    const referenceUrl =
+      "https://daodao.zone/dao/juno1nktrulhakwmon3wlyajpwxyg54n39xx4y8hdaqlty7my/proposals/A145";
+
+    vi.mocked(globalThis.fetch).mockImplementation(async (input) => {
+      const url = String(input);
+
+      if (url.endsWith("/api/polls/poll_1")) {
+        return new Response(
+          JSON.stringify({
+            poll: {
+              id: "poll_1",
+              question: `Virtual Zcash Developer Workshop & IRL Developer Roundtable ${referenceUrl}`,
+              activeOptions: ["A", "B"],
+              optionLabels: {
+                A: "Approve",
+                B: "Reject",
+                C: "Option C",
+                D: "Option D",
+                E: "Option E"
+              },
+              status: "OPEN",
+              feeZec: "0.0001"
+            }
+          })
+        );
+      }
+
+      if (url.endsWith("/api/polls/poll_1/my-ticket")) {
+        return new Response(JSON.stringify({ ticket: null }));
+      }
+
+      return new Response(JSON.stringify({ requests: [] }));
+    });
+
+    await renderPollVotePage();
+
+    expect(
+      await screen.findByRole("heading", {
+        name: "Virtual Zcash Developer Workshop & IRL Developer Roundtable"
+      })
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/juno1nktrulhakwmon3wlyajpwxyg54n39xx4y8hdaqlty7my/)).not.toBeInTheDocument();
+
+    const referenceLink = screen.getByRole("link", { name: "daodao.zone" });
+    expect(referenceLink).toHaveAttribute("href", referenceUrl);
+    expect(referenceLink).toHaveAttribute("target", "_blank");
+    expect(referenceLink).toHaveAttribute("rel", "noopener noreferrer");
+  });
+
   it("does not render answer controls for a poll that is not open", async () => {
     vi.spyOn(Date, "now").mockReturnValue(new Date("2026-05-01T10:00:00.000Z").getTime());
 

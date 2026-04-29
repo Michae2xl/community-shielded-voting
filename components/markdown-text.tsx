@@ -110,7 +110,7 @@ function renderInline(value: string, allowLinks: boolean): ReactNode[] {
               <a
                 key={`link-${key++}`}
                 href={href}
-                rel={isExternal ? "noreferrer" : undefined}
+                rel={isExternal ? "noopener noreferrer" : undefined}
                 target={isExternal ? "_blank" : undefined}
               >
                 {renderInline(label, false)}
