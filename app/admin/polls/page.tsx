@@ -5,6 +5,7 @@ import { readSession } from "@/lib/auth/session";
 import { MarkdownInline } from "@/components/markdown-text";
 import { ZcashBrandmark } from "@/components/zcash-brandmark";
 import { db } from "@/lib/db";
+import { buildAdminTurnout } from "@/lib/domain/admin-voter-rows";
 
 function formatDateTime(value: Date) {
   return new Intl.DateTimeFormat("en-GB", {
@@ -94,8 +95,8 @@ export default async function AdminPollDirectoryPage() {
           </div>
           <p className="editorial-copy editorial-copy--wide">
             Review only the polls you created, jump into the dashboard, and track
-            how many voters completed the flow without opening the audit-heavy
-            surface first. Total polls: {polls.length}.
+            aggregate turnout without exposing individual completion before close.
+            Total polls: {polls.length}.
           </p>
         </header>
 
@@ -111,11 +112,7 @@ export default async function AdminPollDirectoryPage() {
 
           <div className="admin-directory-list">
             {polls.map((poll) => {
-              const completedVoters = poll.voterAccesses.filter((access) =>
-                access.assignments.some(
-                  (assignment) => assignment.ticket.status === "VOTED"
-                )
-              ).length;
+              const turnout = buildAdminTurnout(poll.voterAccesses);
 
               return (
                 <Link
@@ -142,10 +139,8 @@ export default async function AdminPollDirectoryPage() {
                       <strong>{formatDateTime(poll.closesAt)}</strong>
                     </div>
                     <div>
-                      <span className="section-label">Completed voters</span>
-                      <strong>
-                        {completedVoters}/{poll.voterAccesses.length}
-                      </strong>
+                      <span className="section-label">Votes received</span>
+                      <strong>{turnout.label}</strong>
                     </div>
                     <div>
                       <span className="section-label">Reconciled result</span>

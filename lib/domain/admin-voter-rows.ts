@@ -1,4 +1,12 @@
-type AdminVoterAccessInput = {
+type AdminTurnoutAccessInput = {
+  assignments: Array<{
+    ticket: {
+      status: string;
+    };
+  }>;
+};
+
+type AdminVoterAccessInput = AdminTurnoutAccessInput & {
   id: string;
   nick: string;
   email: string;
@@ -29,7 +37,7 @@ export type AdminTurnout = {
   label: string;
 };
 
-export function buildAdminTurnout(accesses: AdminVoterAccessInput[]): AdminTurnout {
+export function buildAdminTurnout(accesses: AdminTurnoutAccessInput[]): AdminTurnout {
   const total = accesses.length;
   const completed = accesses.filter((access) =>
     access.assignments.some((assignment) => assignment.ticket.status === "VOTED")
