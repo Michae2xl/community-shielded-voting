@@ -13,6 +13,7 @@ import {
 import { readSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { canRevealPollResults } from "@/lib/domain/results-visibility";
+import { buildAdminVoterRows } from "@/lib/domain/admin-voter-rows";
 import { buildAdminReceiptSummary } from "@/lib/services/admin-receipts";
 import { readPollCollectorTally } from "@/lib/services/collector-tally";
 import { getZkoolClient } from "@/lib/zcash/zkool-client";
@@ -265,36 +266,7 @@ export default async function AdminPollPage({
     process.env.RESEND_API_KEY && process.env.RESEND_FROM_EMAIL
   );
   const hasSentInvites = sentInviteCount > 0 || openedInviteCount > 0;
-  const voterRows = poll.voterAccesses.map((access) => {
-    const ticketStatuses = access.assignments.map((assignment) => assignment.ticket.status);
-    const inviteStatuses = access.invites.map((invite) => invite.status);
-    const hasCompletedVote = ticketStatuses.includes("VOTED");
-    const inviteStatus = resultsVisible && hasCompletedVote
-      ? "Vote received"
-      : inviteStatuses.includes("OPENED")
-        ? "Opened"
-        : inviteStatuses.includes("SENT")
-          ? "Sent"
-          : inviteStatuses.includes("FAILED")
-            ? "Failed"
-            : "Pending";
-    const statusTone = resultsVisible && hasCompletedVote
-      ? "success"
-      : inviteStatus === "Failed"
-        ? "warning"
-        : "neutral";
-    const canRemove = inviteStatuses.length === 0 && ticketStatuses.length === 0;
-
-    return {
-      id: access.id,
-      nick: access.nick,
-      email: access.email,
-      inviteStatus,
-      statusTone,
-      canRemove,
-      canSelect: resultsVisible ? !hasCompletedVote : true
-    } as const;
-  });
+  const voterRows = buildAdminVoterRows(poll.voterAccesses, { resultsVisible });
 
   return (
     <main className="page-shell">
@@ -453,7 +425,11 @@ export default async function AdminPollPage({
                 <MetricCard label="Failed" value={failedInviteCount} />
                 <MetricCard
                   label="Completed voters"
-                  value={`${completedVoterCount}/${poll.voterAccesses.length}`}
+                  value={
+                    resultsVisible
+                      ? `${completedVoterCount}/${poll.voterAccesses.length}`
+                      : "Hidden"
+                  }
                 />
               </div>
             </section>
@@ -474,6 +450,11 @@ export default async function AdminPollPage({
               Add voters one by one or in bulk. Rows that were never invited can be
               removed. Once an invite exists, the row stays for audit and access.
             </p>
+            {!resultsVisible ? (
+              <p className="muted-text">
+                Vote completion is hidden here until this poll is closed or finalized.
+              </p>
+            ) : null}
             <AdminVotersManager pollId={poll.id} rows={voterRows} />
           </section>
         ) : null}
@@ -492,6 +473,12 @@ export default async function AdminPollPage({
               Use this after the poll is already live or after you add new voters.
               Pending rows stay inactive until you explicitly resend them.
             </p>
+            {!resultsVisible ? (
+              <p className="muted-text">
+                Delivery status stays visible for operations, but voter completion is
+                hidden until this poll is closed or finalized.
+              </p>
+            ) : null}
             <AdminDeliveryManager pollId={poll.id} rows={voterRows} />
           </section>
         ) : null}
