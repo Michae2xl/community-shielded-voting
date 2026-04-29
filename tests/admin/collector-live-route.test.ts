@@ -44,7 +44,11 @@ describe("admin collector live route", () => {
       nick: "admin",
       role: "ADMIN"
     });
-    findOwnedPollMock.mockResolvedValue({ id: "poll_1" });
+    findOwnedPollMock.mockResolvedValue({
+      id: "poll_1",
+      status: "CLOSED",
+      closesAt: new Date("2026-04-21T00:00:00.000Z")
+    });
     readPollCollectorTallyMock.mockResolvedValue({
       totalConfirmed: 1,
       counts: {
@@ -75,5 +79,30 @@ describe("admin collector live route", () => {
       }
     });
     expect(scheduleAutoPollReconcileMock).toHaveBeenCalledWith("poll_1");
+  });
+
+  it("does not expose collector counts before close", async () => {
+    readSessionMock.mockResolvedValue({
+      userId: "admin_1",
+      nick: "admin",
+      role: "ADMIN"
+    });
+    findOwnedPollMock.mockResolvedValue({
+      id: "poll_1",
+      status: "OPEN",
+      closesAt: new Date("2999-04-21T00:00:00.000Z")
+    });
+
+    const response = await GET(
+      new Request("http://localhost/api/admin/polls/poll_1/collector-live") as never,
+      { params: Promise.resolve({ pollId: "poll_1" }) } as never
+    );
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toMatchObject({
+      error: "RESULTS_NOT_AVAILABLE"
+    });
+    expect(readPollCollectorTallyMock).not.toHaveBeenCalled();
+    expect(scheduleAutoPollReconcileMock).not.toHaveBeenCalled();
   });
 });

@@ -56,7 +56,11 @@ describe("GET /api/admin/polls/[pollId]/tally", () => {
       nick: "alice",
       role: "ADMIN"
     });
-    pollFindFirstMock.mockResolvedValue({ id: "poll_1" });
+    pollFindFirstMock.mockResolvedValue({
+      id: "poll_1",
+      status: "CLOSED",
+      closesAt: new Date("2026-04-21T00:00:00.000Z")
+    });
     pollTallyFindUniqueMock.mockResolvedValue(null);
 
     const response = await getTally(
@@ -75,5 +79,29 @@ describe("GET /api/admin/polls/[pollId]/tally", () => {
         E: 0
       }
     });
+  });
+
+  it("embargoes tally before the poll is closed or finalized", async () => {
+    readSessionMock.mockResolvedValue({
+      userId: "user_1",
+      nick: "alice",
+      role: "ADMIN"
+    });
+    pollFindFirstMock.mockResolvedValue({
+      id: "poll_1",
+      status: "OPEN",
+      closesAt: new Date("2999-04-21T00:00:00.000Z")
+    });
+
+    const response = await getTally(
+      new Request("http://localhost/api/admin/polls/poll_1/tally") as never,
+      { params: Promise.resolve({ pollId: "poll_1" }) } as never
+    );
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toMatchObject({
+      error: "RESULTS_NOT_AVAILABLE"
+    });
+    expect(pollTallyFindUniqueMock).not.toHaveBeenCalled();
   });
 });

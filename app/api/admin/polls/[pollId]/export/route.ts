@@ -2,6 +2,10 @@ import { canManagePolls } from "@/lib/auth/guards";
 import { findOwnedPoll } from "@/lib/auth/poll-ownership";
 import { readSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
+import {
+  buildResultsUnavailablePayload,
+  canRevealPollResults
+} from "@/lib/domain/results-visibility";
 import { adminReceiptSummaryCsv, buildAdminReceiptSummary } from "@/lib/services/admin-receipts";
 
 export async function GET(
@@ -20,12 +24,19 @@ export async function GET(
     optionBLabel: true,
     optionCLabel: true,
     optionDLabel: true,
-    optionELabel: true
+    optionELabel: true,
+    status: true,
+    closesAt: true
   });
 
   if (!poll) {
     return new Response("poll not found", { status: 404 });
   }
+
+  if (!canRevealPollResults(poll)) {
+    return Response.json(buildResultsUnavailablePayload(poll), { status: 409 });
+  }
+
   const receipts = await db.voteReceipt.findMany({
     where: {
       pollId

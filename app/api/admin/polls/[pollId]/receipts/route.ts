@@ -3,6 +3,10 @@ import { canManagePolls } from "@/lib/auth/guards";
 import { findOwnedPoll } from "@/lib/auth/poll-ownership";
 import { readSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
+import {
+  buildResultsUnavailablePayload,
+  canRevealPollResults
+} from "@/lib/domain/results-visibility";
 import { buildAdminReceiptSummary } from "@/lib/services/admin-receipts";
 
 export const receiptRecencyOrderBy = [{ id: "desc" as const }];
@@ -23,11 +27,19 @@ export async function GET(
     optionBLabel: true,
     optionCLabel: true,
     optionDLabel: true,
-    optionELabel: true
+    optionELabel: true,
+    status: true,
+    closesAt: true
   });
 
   if (!poll) {
     return NextResponse.json({ error: "POLL_NOT_FOUND" }, { status: 404 });
+  }
+
+  if (!canRevealPollResults(poll)) {
+    return NextResponse.json(buildResultsUnavailablePayload(poll), {
+      status: 409
+    });
   }
 
   const receipts = await db.voteReceipt.findMany({

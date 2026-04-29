@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AnswerGrid, type AnswerGridOption } from "@/components/answer-grid";
 import { MarkdownText } from "@/components/markdown-text";
@@ -240,7 +241,6 @@ export default function PollVotePageClient({
       }
     }
 
-    setState({ kind: "loading" });
     void load();
 
     return () => {
@@ -470,10 +470,11 @@ export default function PollVotePageClient({
                     because this ticket accepts only one valid vote.
                   </p>
                   <p>
-                    You can follow the public result here:{" "}
-                    <a href="/polls" className="metric-card-link">
-                      https://voting.zkglobalcredit.tech/polls
-                    </a>
+                    You can follow the public result on the{" "}
+                    <Link href="/polls" className="inline-link">
+                      public poll board
+                    </Link>
+                    .
                   </p>
                 </div>
               </div>

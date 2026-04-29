@@ -3,6 +3,10 @@ import { canManagePolls } from "@/lib/auth/guards";
 import { findOwnedPoll } from "@/lib/auth/poll-ownership";
 import { readSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
+import {
+  buildResultsUnavailablePayload,
+  canRevealPollResults
+} from "@/lib/domain/results-visibility";
 
 export function mapTallyResponse(input: {
   countA: number;
@@ -35,10 +39,20 @@ export async function GET(
   }
 
   const { pollId } = await context.params;
-  const poll = await findOwnedPoll(pollId, session.userId, { id: true });
+  const poll = await findOwnedPoll(pollId, session.userId, {
+    id: true,
+    status: true,
+    closesAt: true
+  });
 
   if (!poll) {
     return NextResponse.json({ error: "POLL_NOT_FOUND" }, { status: 404 });
+  }
+
+  if (!canRevealPollResults(poll)) {
+    return NextResponse.json(buildResultsUnavailablePayload(poll), {
+      status: 409
+    });
   }
 
   const tally = await db.pollTally.findUnique({

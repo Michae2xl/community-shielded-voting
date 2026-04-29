@@ -44,7 +44,9 @@ describe("admin export route", () => {
       optionBLabel: "Reject",
       optionCLabel: null,
       optionDLabel: null,
-      optionELabel: null
+      optionELabel: null,
+      status: "CLOSED",
+      closesAt: new Date("2026-04-21T00:00:00.000Z")
     });
     voteReceiptFindManyMock.mockResolvedValue([
       { status: "CONFIRMED", optionLetter: "A" },
@@ -69,5 +71,33 @@ describe("admin export route", () => {
     expect(csv).not.toContain("txid");
     expect(csv).not.toContain("confirmed_at");
     expect(csv).not.toContain("block_height");
+  });
+
+  it("does not export receipt metrics before close", async () => {
+    readSessionMock.mockResolvedValue({
+      userId: "admin_1",
+      nick: "admin",
+      role: "ADMIN"
+    });
+    findOwnedPollMock.mockResolvedValue({
+      optionALabel: "Approve",
+      optionBLabel: "Reject",
+      optionCLabel: null,
+      optionDLabel: null,
+      optionELabel: null,
+      status: "OPEN",
+      closesAt: new Date("2999-04-21T00:00:00.000Z")
+    });
+
+    const response = await GET(
+      new Request("http://localhost/api/admin/polls/poll_1/export") as never,
+      { params: Promise.resolve({ pollId: "poll_1" }) } as never
+    );
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toMatchObject({
+      error: "RESULTS_NOT_AVAILABLE"
+    });
+    expect(voteReceiptFindManyMock).not.toHaveBeenCalled();
   });
 });

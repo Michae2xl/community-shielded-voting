@@ -588,6 +588,7 @@ p {
 .meta-chip {
   display: inline-flex;
   align-items: center;
+  max-width: 100%;
   min-height: 30px;
   padding: 0 12px;
   border-radius: 999px;
@@ -599,6 +600,7 @@ p {
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
+  overflow-wrap: anywhere;
 }
 
 .status-chip {
@@ -643,6 +645,7 @@ p {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  min-width: 0;
 }
 
 .portal-actions--stacked {
@@ -844,13 +847,17 @@ button[type="submit"] {
 .workspace-header-copy {
   display: grid;
   gap: 12px;
+  min-width: 0;
 }
 
 .workspace-title {
+  max-width: 100%;
   font-family: var(--font-technical);
   font-size: clamp(2.6rem, 5vw, 4.6rem);
   line-height: 0.92;
   letter-spacing: -0.06em;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   text-wrap: balance;
 }
 
@@ -1075,12 +1082,15 @@ button[type="submit"] {
 .poll-summary-copy {
   display: grid;
   gap: 6px;
+  min-width: 0;
 }
 
 .poll-summary-copy strong,
 .poll-summary-total {
   font-family: var(--font-display);
   letter-spacing: -0.03em;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .poll-summary-total {
@@ -1155,6 +1165,17 @@ button[type="submit"] {
 
 .vote-guidance-copy p {
   margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.inline-link {
+  color: var(--accent-brass-soft);
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+  overflow-wrap: anywhere;
 }
 
 .qr-support-note {

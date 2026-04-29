@@ -12,6 +12,7 @@ import {
 } from "@/lib/domain/options";
 import { readSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
+import { canRevealPollResults } from "@/lib/domain/results-visibility";
 import { buildAdminReceiptSummary } from "@/lib/services/admin-receipts";
 import { readPollCollectorTally } from "@/lib/services/collector-tally";
 import { getZkoolClient } from "@/lib/zcash/zkool-client";
@@ -216,17 +217,20 @@ export default async function AdminPollPage({
     );
   }
 
-  const receipts = await db.voteReceipt.findMany({
-    where: {
-      pollId: poll.id
-    },
-    select: {
-      optionLetter: true,
-      status: true
-    }
-  });
+  const resultsVisible = canRevealPollResults(poll);
+  const receipts = resultsVisible
+    ? await db.voteReceipt.findMany({
+        where: {
+          pollId: poll.id
+        },
+        select: {
+          optionLetter: true,
+          status: true
+        }
+      })
+    : [];
   const collectorConfigured = getZkoolClient().isConfigured();
-  const collectorLive = collectorConfigured
+  const collectorLive = collectorConfigured && resultsVisible
     ? await readPollCollectorTally(poll.id)
     : null;
 
@@ -250,9 +254,13 @@ export default async function AdminPollPage({
   const failedInviteCount = poll.invites.filter(
     (invite) => invite.status === "FAILED"
   ).length;
-  const completedVoterCount = poll.voterAccesses.filter((access) =>
-    access.assignments.some((assignment) => assignment.ticket.status === "VOTED")
-  ).length;
+  const completedVoterCount = resultsVisible
+    ? poll.voterAccesses.filter((access) =>
+        access.assignments.some(
+          (assignment) => assignment.ticket.status === "VOTED"
+        )
+      ).length
+    : null;
   const emailDeliveryConfigured = Boolean(
     process.env.RESEND_API_KEY && process.env.RESEND_FROM_EMAIL
   );
@@ -261,7 +269,7 @@ export default async function AdminPollPage({
     const ticketStatuses = access.assignments.map((assignment) => assignment.ticket.status);
     const inviteStatuses = access.invites.map((invite) => invite.status);
     const hasCompletedVote = ticketStatuses.includes("VOTED");
-    const inviteStatus = hasCompletedVote
+    const inviteStatus = resultsVisible && hasCompletedVote
       ? "Vote received"
       : inviteStatuses.includes("OPENED")
         ? "Opened"
@@ -270,7 +278,7 @@ export default async function AdminPollPage({
           : inviteStatuses.includes("FAILED")
             ? "Failed"
             : "Pending";
-    const statusTone = hasCompletedVote
+    const statusTone = resultsVisible && hasCompletedVote
       ? "success"
       : inviteStatus === "Failed"
         ? "warning"
@@ -284,7 +292,7 @@ export default async function AdminPollPage({
       inviteStatus,
       statusTone,
       canRemove,
-      canSelect: !hasCompletedVote
+      canSelect: resultsVisible ? !hasCompletedVote : true
     } as const;
   });
 
@@ -333,7 +341,9 @@ export default async function AdminPollPage({
             <article className="editorial-note-card">
               <span className="section-label">Voters</span>
               <strong>
-                {completedVoterCount}/{poll.voterAccesses.length} completed
+                {resultsVisible
+                  ? `${completedVoterCount}/${poll.voterAccesses.length} completed`
+                  : "Hidden until close"}
               </strong>
               <p>{sentInviteCount} invite(s) sent so far.</p>
             </article>
@@ -487,6 +497,30 @@ export default async function AdminPollPage({
         ) : null}
 
         {activeTab === "results" ? (
+          !resultsVisible ? (
+            <section className="hero-card editorial-panel editorial-panel--wide">
+              <div className="editorial-section-head">
+                <div>
+                  <p className="section-label">Results locked</p>
+                  <h2 className="editorial-title editorial-title--compact">
+                    Results unlock only after the poll is closed or finalized.
+                  </h2>
+                </div>
+                <span className="status-pill">Embargoed</span>
+              </div>
+              <p className="editorial-copy editorial-copy--wide">
+                The system can continue reconciling receipts, but answer totals
+                and voter completion stay hidden from admin until the poll is
+                finalized.
+              </p>
+              <div className="editorial-metric-grid">
+                <MetricCard label="Unlock condition" value="Close or finalize poll" />
+                <MetricCard label="Scheduled close" value={formatDateTime(poll.closesAt)} />
+                <MetricCard label="Voter completion" value="Hidden" />
+                <MetricCard label="Answer totals" value="Hidden" />
+              </div>
+            </section>
+          ) : (
           <div className="editorial-grid editorial-grid--dashboard">
             <section className="hero-card editorial-panel">
               <div className="editorial-section-head">
@@ -612,6 +646,7 @@ export default async function AdminPollPage({
               </div>
             </section>
           </div>
+          )
         ) : null}
       </section>
     </main>
