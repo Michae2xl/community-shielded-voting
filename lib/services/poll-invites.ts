@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { generateInviteToken } from "@/lib/domain/invites";
+import { formatOfficialPollDateTime } from "@/lib/domain/poll-window";
 import { buildPollEmailSubject } from "@/lib/email/content";
 import {
   isEmailDeliveryConfigured,
@@ -125,8 +126,8 @@ export async function sendPollInvites(input: {
         voterNick: user.nick,
         loginNick: user.nick,
         inviteUrl,
-        opensAt: poll.opensAt.toISOString(),
-        closesAt: poll.closesAt.toISOString(),
+        opensAt: formatOfficialPollDateTime(poll.opensAt),
+        closesAt: formatOfficialPollDateTime(poll.closesAt),
         pollId: poll.id,
         userId: user.id
       });
@@ -187,8 +188,8 @@ export async function sendPollInvites(input: {
         loginNick: access.nick,
         temporaryPassword: plaintextPassword,
         inviteUrl,
-        opensAt: poll.opensAt.toISOString(),
-        closesAt: poll.closesAt.toISOString(),
+        opensAt: formatOfficialPollDateTime(poll.opensAt),
+        closesAt: formatOfficialPollDateTime(poll.closesAt),
         pollId: poll.id,
         pollVoterAccessId: access.id
       });

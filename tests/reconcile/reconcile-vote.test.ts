@@ -16,6 +16,19 @@ describe("reconcileReceipt", () => {
     expect(result.status).toBe("CONFIRMED");
   });
 
+  it("confirms an on-chain vote even when the amount is below the nominal fee", () => {
+    const result = reconcileReceipt({
+      pollStatus: "OPEN",
+      expectedOption: "A",
+      amountZat: 9938n,
+      minimumAmountZat: 10000n,
+      memo: "A",
+      alreadyConfirmed: false
+    });
+
+    expect(result.status).toBe("CONFIRMED");
+  });
+
   it("rejects wrong memo", () => {
     const result = reconcileReceipt({
       pollStatus: "OPEN",

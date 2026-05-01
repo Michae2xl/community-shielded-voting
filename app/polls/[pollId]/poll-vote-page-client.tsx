@@ -90,7 +90,8 @@ function formatLocalDateTime(value: string) {
     month: "short",
     year: "numeric",
     hour: "2-digit",
-    minute: "2-digit"
+    minute: "2-digit",
+    timeZoneName: "short"
   }).format(new Date(value));
 }
 
@@ -336,7 +337,7 @@ export default function PollVotePageClient({
       : state.kind === "access_error"
       ? "We could not verify your access to this poll. Reopen the invite email or sign in again."
       : state.kind === "not_found"
-      ? "This poll is not available for your current account. Reopen the invite email or ask the admin to verify access."
+      ? "This browser session is not linked to this poll. Reopen the exact invite email or sign out before trying again."
       : state.kind === "choose"
       ? `${poll?.status ?? "OPEN"} · choose one option before generating the QR code`
       : state.kind === "locked"
@@ -368,7 +369,7 @@ export default function PollVotePageClient({
       : state.kind === "access_error"
       ? "Your session expired or this invite is no longer active. Reopen the invite email or sign in again."
       : state.kind === "not_found"
-      ? "We could not load this poll for your account. Reopen the invite email or ask the admin to confirm your access."
+      ? "This usually means the browser is signed in with a different voter session than the invite. Sign out, then reopen the original invite link for this poll."
       : state.kind === "not_open"
       ? state.poll.status === "SCHEDULED"
         ? `${describeUpcomingWindow(state.poll.opensAt)} Opening time: ${formatLocalDateTime(state.poll.opensAt)}.`

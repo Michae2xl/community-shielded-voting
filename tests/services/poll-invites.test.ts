@@ -139,8 +139,8 @@ describe("sendPollInvites", () => {
       voterNick: "alice",
       loginNick: "alice",
       inviteUrl: "https://vote.example.com/invites/token_1",
-      opensAt: "2026-05-01T10:00:00.000Z",
-      closesAt: "2026-05-03T10:00:00.000Z",
+      opensAt: "01 May 2026, 10:00 UTC",
+      closesAt: "03 May 2026, 10:00 UTC",
       pollId: "poll_1",
       userId: "user_1"
     });
@@ -276,8 +276,8 @@ describe("sendPollInvites", () => {
       loginNick: "michae2xl",
       temporaryPassword: "TEMP-PASS-01",
       inviteUrl: "https://vote.example.com/invites/token_1",
-      opensAt: "2026-05-01T10:00:00.000Z",
-      closesAt: "2026-05-03T10:00:00.000Z",
+      opensAt: "01 May 2026, 10:00 UTC",
+      closesAt: "03 May 2026, 10:00 UTC",
       pollId: "poll_1",
       pollVoterAccessId: "access_1"
     });

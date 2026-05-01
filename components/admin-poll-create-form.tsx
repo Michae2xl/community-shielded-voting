@@ -2,6 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition, type FormEvent } from "react";
+import {
+  formatOfficialPollDateTime,
+  MIN_POLL_WINDOW_HOURS
+} from "@/lib/domain/poll-window";
 
 type DraftVoterRow = {
   id: string;
@@ -31,7 +35,7 @@ function createRow(): DraftVoterRow {
   };
 }
 
-function toIsoDateTime(value: string) {
+function toUtcIsoDateTime(value: string) {
   if (!value) {
     return "";
   }
@@ -53,7 +57,22 @@ function toIsoDateTime(value: string) {
     return "";
   }
 
-  return new Date(year, month - 1, day, hour, minute).toISOString();
+  return new Date(Date.UTC(year, month - 1, day, hour, minute)).toISOString();
+}
+
+function formatLocalPreview(value: string) {
+  if (!value) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZoneName: "short"
+  }).format(new Date(value));
 }
 
 function prepareVoters(rows: DraftVoterRow[]): PreparedVoters {
@@ -108,6 +127,8 @@ export function AdminPollCreateForm() {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const preparedVoters = useMemo(() => prepareVoters(rows), [rows]);
+  const opensAtIso = toUtcIsoDateTime(opensAtLocal);
+  const closesAtIso = toUtcIsoDateTime(closesAtLocal);
 
   function updateRow(id: string, field: "nick" | "email", value: string) {
     setRows((current) =>
@@ -336,11 +357,15 @@ export function AdminPollCreateForm() {
       <section className="editorial-module">
         <div className="editorial-module-head">
           <p className="section-label">Window</p>
-          <h3>When should the poll run?</h3>
+          <h3>Set the official global UTC window</h3>
         </div>
+        <p className="field-hint">
+          Enter the official UTC open and close time. Voters see the same window in
+          their own local timezone. Minimum window: {MIN_POLL_WINDOW_HOURS} hours.
+        </p>
         <div className="editorial-option-grid editorial-option-grid--window">
           <label className="field">
-            <span className="field-label">Opens at</span>
+            <span className="field-label">Opens at (UTC)</span>
             <input
               id="opensAtLocal"
               name="opensAtLocal"
@@ -349,10 +374,10 @@ export function AdminPollCreateForm() {
               onChange={(event) => setOpensAtLocal(event.currentTarget.value)}
               required
             />
-            <input type="hidden" name="opensAt" value={toIsoDateTime(opensAtLocal)} />
+            <input type="hidden" name="opensAt" value={opensAtIso} />
           </label>
           <label className="field">
-            <span className="field-label">Closes at</span>
+            <span className="field-label">Closes at (UTC)</span>
             <input
               id="closesAtLocal"
               name="closesAtLocal"
@@ -361,9 +386,16 @@ export function AdminPollCreateForm() {
               onChange={(event) => setClosesAtLocal(event.currentTarget.value)}
               required
             />
-            <input type="hidden" name="closesAt" value={toIsoDateTime(closesAtLocal)} />
+            <input type="hidden" name="closesAt" value={closesAtIso} />
           </label>
         </div>
+        {opensAtIso && closesAtIso ? (
+          <p className="field-hint">
+            Official window: {formatOfficialPollDateTime(opensAtIso)} to{" "}
+            {formatOfficialPollDateTime(closesAtIso)}. Your local preview:{" "}
+            {formatLocalPreview(opensAtIso)} to {formatLocalPreview(closesAtIso)}.
+          </p>
+        ) : null}
       </section>
 
       <div className="portal-support">

@@ -5,6 +5,7 @@ import { generateInviteToken } from "@/lib/domain/invites";
 import { getDefaultPollFeeZat } from "@/lib/config/polls";
 import { db } from "@/lib/db";
 import { normalizeOptionLabel } from "@/lib/domain/options";
+import { MIN_POLL_WINDOW_HOURS, MIN_POLL_WINDOW_MS } from "@/lib/domain/poll-window";
 import { recordPollCreatedAuditEvent } from "@/lib/services/public-audit-events";
 
 export class PollServiceError extends Error {
@@ -37,11 +38,20 @@ export const createDraftPollInputSchema = z
     voters: z.array(pollVoterInputSchema).min(1)
   })
   .superRefine((value, ctx) => {
-    if (new Date(value.closesAt).getTime() <= new Date(value.opensAt).getTime()) {
+    const opensAtMs = new Date(value.opensAt).getTime();
+    const closesAtMs = new Date(value.closesAt).getTime();
+
+    if (closesAtMs <= opensAtMs) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["closesAt"],
         message: "closesAt must be after opensAt"
+      });
+    } else if (closesAtMs - opensAtMs < MIN_POLL_WINDOW_MS) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["closesAt"],
+        message: `Poll window must be at least ${MIN_POLL_WINDOW_HOURS} hours for global voters`
       });
     }
 

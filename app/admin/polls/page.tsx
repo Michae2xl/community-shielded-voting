@@ -6,17 +6,10 @@ import { MarkdownInline } from "@/components/markdown-text";
 import { ZcashBrandmark } from "@/components/zcash-brandmark";
 import { db } from "@/lib/db";
 import { buildAdminTurnout } from "@/lib/domain/admin-voter-rows";
+import { formatOfficialPollDateTime } from "@/lib/domain/poll-window";
 
 function formatDateTime(value: Date) {
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-    timeZone: "UTC"
-  }).format(value);
+  return formatOfficialPollDateTime(value);
 }
 
 function presentStatus(status: string) {

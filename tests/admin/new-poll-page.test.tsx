@@ -13,39 +13,32 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/admin/polls/new"
 }));
 
-function localDateTimeToIso(value: string) {
-  const [datePart, timePart] = value.split("T");
-  const [year, month, day] = datePart.split("-").map(Number);
-  const [hour, minute] = timePart.split(":").map(Number);
-
-  return new Date(year, month - 1, day, hour, minute).toISOString();
-}
-
 describe("NewPollPage", () => {
   beforeEach(() => {
     pushMock.mockReset();
     vi.stubGlobal("fetch", vi.fn());
   });
 
-  it("publishes ISO timestamps from the browser-local datetime inputs", () => {
+  it("publishes official UTC timestamps from the datetime inputs", () => {
     const { container } = render(<NewPollPage />);
 
-    fireEvent.change(screen.getByLabelText(/^opens at$/i), {
+    fireEvent.change(screen.getByLabelText(/^opens at/i), {
       target: { value: "2026-05-01T10:00" }
     });
-    fireEvent.change(screen.getByLabelText(/^closes at$/i), {
+    fireEvent.change(screen.getByLabelText(/^closes at/i), {
       target: { value: "2026-05-03T10:00" }
     });
 
     expect(
       (container.querySelector('input[name="opensAt"]') as HTMLInputElement).value
-    ).toBe(localDateTimeToIso("2026-05-01T10:00"));
+    ).toBe("2026-05-01T10:00:00.000Z");
     expect(
       (container.querySelector('input[name="closesAt"]') as HTMLInputElement).value
-    ).toBe(localDateTimeToIso("2026-05-03T10:00"));
+    ).toBe("2026-05-03T10:00:00.000Z");
     expect(
-      (screen.getByLabelText(/^opens at$/i) as HTMLInputElement).name
+      (screen.getByLabelText(/^opens at/i) as HTMLInputElement).name
     ).toBe("opensAtLocal");
+    expect(screen.getByText(/minimum window: 24 hours/i)).toBeInTheDocument();
   });
 
   it("redirects to the created poll dashboard after a successful submit", async () => {
@@ -70,10 +63,10 @@ describe("NewPollPage", () => {
     fireEvent.change(screen.getByLabelText(/^voter email 1$/i), {
       target: { value: "michaelguima@proton.me" }
     });
-    fireEvent.change(screen.getByLabelText(/^opens at$/i), {
+    fireEvent.change(screen.getByLabelText(/^opens at/i), {
       target: { value: "2026-05-01T10:00" }
     });
-    fireEvent.change(screen.getByLabelText(/^closes at$/i), {
+    fireEvent.change(screen.getByLabelText(/^closes at/i), {
       target: { value: "2026-05-03T10:00" }
     });
 
@@ -107,10 +100,10 @@ describe("NewPollPage", () => {
       target: { value: "michaelguima@proton.me" }
     });
     fireEvent.click(screen.getByRole("button", { name: /add voter/i }));
-    fireEvent.change(screen.getByLabelText(/^opens at$/i), {
+    fireEvent.change(screen.getByLabelText(/^opens at/i), {
       target: { value: "2026-05-01T10:00" }
     });
-    fireEvent.change(screen.getByLabelText(/^closes at$/i), {
+    fireEvent.change(screen.getByLabelText(/^closes at/i), {
       target: { value: "2026-05-03T10:00" }
     });
 
@@ -147,10 +140,10 @@ describe("NewPollPage", () => {
     fireEvent.change(screen.getByLabelText(/^voter nick 2$/i), {
       target: { value: "alice" }
     });
-    fireEvent.change(screen.getByLabelText(/^opens at$/i), {
+    fireEvent.change(screen.getByLabelText(/^opens at/i), {
       target: { value: "2026-05-01T10:00" }
     });
-    fireEvent.change(screen.getByLabelText(/^closes at$/i), {
+    fireEvent.change(screen.getByLabelText(/^closes at/i), {
       target: { value: "2026-05-03T10:00" }
     });
 

@@ -22,13 +22,6 @@ export function reconcileReceipt(input: {
     };
   }
 
-  if (input.amountZat < input.minimumAmountZat) {
-    return {
-      status: VoteReceiptStatus.REJECTED,
-      rejectionReason: "amount is below minimum fee"
-    };
-  }
-
   if (input.memo !== input.expectedOption) {
     return {
       status: VoteReceiptStatus.REJECTED,

@@ -17,6 +17,7 @@ import {
   buildAdminTurnout,
   buildAdminVoterRows
 } from "@/lib/domain/admin-voter-rows";
+import { formatOfficialPollDateTime } from "@/lib/domain/poll-window";
 import { buildAdminReceiptSummary } from "@/lib/services/admin-receipts";
 import { readPollCollectorTally } from "@/lib/services/collector-tally";
 import { getZkoolClient } from "@/lib/zcash/zkool-client";
@@ -35,15 +36,7 @@ function formatDateTime(value: Date | null) {
     return "Pending";
   }
 
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-    timeZone: "UTC"
-  }).format(value);
+  return formatOfficialPollDateTime(value);
 }
 
 function presentStatus(status: string) {

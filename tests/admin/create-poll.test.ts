@@ -51,6 +51,19 @@ describe("createDraftPollInputSchema", () => {
       })
     ).toThrowError(/closesAt must be after opensAt/i);
   });
+
+  it("rejects poll windows shorter than the global minimum", () => {
+    expect(() =>
+      createDraftPollInputSchema.parse({
+        question: "Which option should we fund?",
+        opensAt: "2026-05-01T10:00:00.000Z",
+        closesAt: "2026-05-01T12:00:00.000Z",
+        optionALabel: "Approve",
+        optionBLabel: "Reject",
+        voters: [{ nick: "michae2xl", email: "michaelguima@proton.me" }]
+      })
+    ).toThrowError(/at least 24 hours/i);
+  });
 });
 
 describe("createDraftPoll", () => {
