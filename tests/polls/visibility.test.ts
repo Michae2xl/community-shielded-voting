@@ -37,7 +37,7 @@ beforeEach(() => {
 });
 
 describe("voter poll visibility", () => {
-  it("queries only OPEN polls for the voter list API and page query", async () => {
+  it("queries public polls without showing stale OPEN polls", async () => {
     readSessionMock.mockResolvedValue(null);
     pollFindManyMock.mockResolvedValue([]);
 
@@ -48,28 +48,42 @@ describe("voter poll visibility", () => {
       1,
       expect.objectContaining({
         where: {
-          status: "OPEN",
-          closesAt: {
-            gt: expect.any(Date)
-          }
+          OR: [
+            {
+              status: "OPEN",
+              closesAt: {
+                gt: expect.any(Date)
+              }
+            },
+            {
+              status: {
+                in: ["CLOSED", "FINALIZED", "ARCHIVED"]
+              }
+            }
+          ]
         },
-        orderBy: {
-          createdAt: "desc"
-        }
+        orderBy: [{ closesAt: "desc" }, { createdAt: "desc" }]
       })
     );
     expect(pollFindManyMock).toHaveBeenNthCalledWith(
       2,
       expect.objectContaining({
         where: {
-          status: "OPEN",
-          closesAt: {
-            gt: expect.any(Date)
-          }
+          OR: [
+            {
+              status: "OPEN",
+              closesAt: {
+                gt: expect.any(Date)
+              }
+            },
+            {
+              status: {
+                in: ["CLOSED", "FINALIZED", "ARCHIVED"]
+              }
+            }
+          ]
         },
-        orderBy: {
-          createdAt: "desc"
-        }
+        orderBy: [{ closesAt: "desc" }, { createdAt: "desc" }]
       })
     );
   });
@@ -92,28 +106,42 @@ describe("voter poll visibility", () => {
       1,
       expect.objectContaining({
         where: {
-          status: "OPEN",
-          closesAt: {
-            gt: expect.any(Date)
-          }
+          OR: [
+            {
+              status: "OPEN",
+              closesAt: {
+                gt: expect.any(Date)
+              }
+            },
+            {
+              status: {
+                in: ["CLOSED", "FINALIZED", "ARCHIVED"]
+              }
+            }
+          ]
         },
-        orderBy: {
-          createdAt: "desc"
-        }
+        orderBy: [{ closesAt: "desc" }, { createdAt: "desc" }]
       })
     );
     expect(pollFindManyMock).toHaveBeenNthCalledWith(
       2,
       expect.objectContaining({
         where: {
-          status: "OPEN",
-          closesAt: {
-            gt: expect.any(Date)
-          }
+          OR: [
+            {
+              status: "OPEN",
+              closesAt: {
+                gt: expect.any(Date)
+              }
+            },
+            {
+              status: {
+                in: ["CLOSED", "FINALIZED", "ARCHIVED"]
+              }
+            }
+          ]
         },
-        orderBy: {
-          createdAt: "desc"
-        }
+        orderBy: [{ closesAt: "desc" }, { createdAt: "desc" }]
       })
     );
   });
@@ -334,5 +362,38 @@ describe("voter poll visibility", () => {
     expect(
       newest.compareDocumentPosition(older) & Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
+  });
+
+  it("renders closed polls with the final public result", async () => {
+    readSessionMock.mockResolvedValue(null);
+    pollFindManyMock.mockResolvedValue([
+      {
+        id: "poll_closed",
+        question: "Closed governance poll",
+        status: "CLOSED",
+        optionALabel: "Approve",
+        optionBLabel: "Reject",
+        optionCLabel: null,
+        optionDLabel: null,
+        optionELabel: null,
+        tally: {
+          totalConfirmed: 15,
+          countA: 9,
+          countB: 6,
+          countC: 0,
+          countD: 0,
+          countE: 0
+        }
+      }
+    ]);
+
+    render(await PollsPage());
+
+    expect(screen.getByText("Closed governance poll")).toBeInTheDocument();
+    expect(screen.getByText("Closed poll")).toBeInTheDocument();
+    expect(screen.getByText("CLOSED")).toHaveClass("poll-summary-status");
+    expect(screen.getByText("15 valid votes")).toBeInTheDocument();
+    expect(screen.getByText("60%")).toBeInTheDocument();
+    expect(screen.getByText("40%")).toBeInTheDocument();
   });
 });

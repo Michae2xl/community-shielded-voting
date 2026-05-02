@@ -13,14 +13,28 @@ export async function GET() {
   const now = new Date();
   const polls = await db.poll.findMany({
     where: {
-      status: "OPEN",
-      closesAt: {
-        gt: now
+      OR: [
+        {
+          status: "OPEN",
+          closesAt: {
+            gt: now
+          }
+        },
+        {
+          status: {
+            in: ["CLOSED", "FINALIZED", "ARCHIVED"]
+          }
+        }
+      ]
+    },
+    orderBy: [
+      {
+        closesAt: "desc"
+      },
+      {
+        createdAt: "desc"
       }
-    },
-    orderBy: {
-      createdAt: "desc"
-    },
+    ],
     select: {
       id: true,
       question: true,

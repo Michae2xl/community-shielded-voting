@@ -26,14 +26,28 @@ export default async function PollsPage() {
 
   const polls = await db.poll.findMany({
     where: {
-      status: "OPEN" as const,
-      closesAt: {
-        gt: now
+      OR: [
+        {
+          status: "OPEN" as const,
+          closesAt: {
+            gt: now
+          }
+        },
+        {
+          status: {
+            in: ["CLOSED", "FINALIZED", "ARCHIVED"] as const
+          }
+        }
+      ]
+    },
+    orderBy: [
+      {
+        closesAt: "desc"
+      },
+      {
+        createdAt: "desc"
       }
-    },
-    orderBy: {
-      createdAt: "desc"
-    },
+    ],
     select: {
       id: true,
       question: true,
@@ -55,6 +69,8 @@ export default async function PollsPage() {
       }
     }
   });
+  const openCount = polls.filter((poll) => poll.status === "OPEN").length;
+  const closedCount = polls.length - openCount;
 
   return (
     <main className="page-shell">
@@ -69,11 +85,12 @@ export default async function PollsPage() {
             <p className="eyebrow">
               {session ? (session.role === "ADMIN" ? "Admin view" : "Signed-in view") : "Public board"}
             </p>
-            <h1 className="workspace-title">Open polls</h1>
+            <h1 className="workspace-title">Polls</h1>
             <p className="workspace-copy">
-              This board stays public and read-only. It shows each OPEN poll with its
-              question, poll ID, and reconciled percentage split, while direct voting
-              still happens only through the invite link or a signed-in poll URL.
+              This board stays public and read-only. It shows live and closed polls
+              with their question, poll ID, status, and reconciled percentage split.
+              Direct voting still happens only through the invite link or a signed-in
+              poll URL.
             </p>
           </div>
           <div className="portal-actions">
@@ -84,16 +101,17 @@ export default async function PollsPage() {
             ) : null}
             <span className="meta-chip">Reconciled</span>
             <span className="meta-chip">Read only</span>
-            <span className="meta-chip meta-chip--mint">{polls.length} OPEN</span>
+            <span className="meta-chip meta-chip--mint">{openCount} OPEN</span>
+            <span className="meta-chip">{closedCount} CLOSED</span>
           </div>
         </header>
 
         <section className="hero-card form-panel">
           <div className="form-section-intro">
             <p className="section-label">Poll directory</p>
-            <h2 className="form-section-title">Eligible polls</h2>
+            <h2 className="form-section-title">Public poll archive</h2>
             <p className="form-section-copy">
-              Each OPEN poll shows only the validated public result, with duplicate
+              Each poll shows only the validated public result, with duplicate
               protection already applied before the percentages are rendered.
             </p>
           </div>
@@ -114,7 +132,9 @@ export default async function PollsPage() {
                   <article key={poll.id} className="poll-summary-card">
                     <div className="poll-summary-head">
                       <div className="poll-summary-copy">
-                        <p className="section-label">Live poll</p>
+                        <p className="section-label">
+                          {poll.status === "OPEN" ? "Live poll" : "Closed poll"}
+                        </p>
                         <strong>
                           <MarkdownInline value={questionParts.title} />
                         </strong>
@@ -175,7 +195,7 @@ export default async function PollsPage() {
                 );
               })
             ) : (
-              <p className="muted-text">No OPEN polls are available for this account.</p>
+              <p className="muted-text">No public polls are available for this account.</p>
             )}
           </div>
         </section>
