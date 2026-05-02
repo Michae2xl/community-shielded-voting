@@ -371,6 +371,9 @@ describe("voter poll visibility", () => {
         id: "poll_closed",
         question: "Closed governance poll",
         status: "CLOSED",
+        voteModel: "SINGLE_CHOICE",
+        quorumPercent: 40,
+        passingThresholdPercent: 67,
         optionALabel: "Approve",
         optionBLabel: "Reject",
         optionCLabel: null,
@@ -400,6 +403,10 @@ describe("voter poll visibility", () => {
     expect(screen.getByText("Turnout")).toBeInTheDocument();
     expect(screen.getByText("83%")).toBeInTheDocument();
     expect(screen.getByText("15/18 voted")).toBeInTheDocument();
+    expect(screen.getByText("Quorum 40%")).toBeInTheDocument();
+    expect(screen.getByText("Decision")).toBeInTheDocument();
+    expect(screen.getByText("Rejected")).toBeInTheDocument();
+    expect(screen.getByText(/Approval 60% \/ 67%/)).toBeInTheDocument();
     expect(screen.getByText("60%")).toBeInTheDocument();
     expect(screen.getByText("40%")).toBeInTheDocument();
   });

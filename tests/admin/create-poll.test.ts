@@ -91,6 +91,11 @@ describe("createDraftPoll", () => {
           optionALabel: "Approve",
           optionBLabel: "Reject",
           optionCLabel: undefined,
+          optionDLabel: undefined,
+          optionELabel: undefined,
+          voteModel: "SINGLE_CHOICE",
+          quorumPercent: 40,
+          passingThresholdPercent: 67,
           feeZat: 10000n,
           voterAccesses: {
             create: [
@@ -126,5 +131,20 @@ describe("createDraftPoll", () => {
     ).rejects.toThrow(/duplicate voter/i);
 
     expect(pollCreateMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects extra answers outside the single-choice A/B/abstain shape", () => {
+    expect(() =>
+      createDraftPollInputSchema.parse({
+        question: "Should the next shielded rollout proceed on mainnet?",
+        opensAt: "2026-04-21T12:00:00.000Z",
+        closesAt: "2026-04-22T12:00:00.000Z",
+        optionALabel: "Approve",
+        optionBLabel: "Reject",
+        optionCLabel: "Abstain",
+        optionDLabel: "Maybe",
+        voters: [{ nick: "michae2xl", email: "michaelguima@proton.me" }]
+      })
+    ).toThrowError(/single-choice/i);
   });
 });

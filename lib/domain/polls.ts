@@ -1,5 +1,9 @@
 import { createHash } from "node:crypto";
 import type { PollStatus } from "@prisma/client";
+import {
+  formatGovernanceRuleMemoSegment,
+  type GovernanceRulesInput
+} from "@/lib/domain/governance";
 import { normalizeOptionLabel } from "@/lib/domain/options";
 
 export const UNPUBLISHED_POLL_STATUSES: PollStatus[] = ["DRAFT", "ANCHORING"];
@@ -30,6 +34,6 @@ export function buildAnchorMemo(input: {
   questionHash: string;
   opensAt: string;
   closesAt: string;
-}): string {
-  return `POLL|v1|${input.pollId}|${input.questionHash}|${input.opensAt}|${input.closesAt}`;
+} & GovernanceRulesInput): string {
+  return `POLL|v2|${input.pollId}|${input.questionHash}|${input.opensAt}|${input.closesAt}|${formatGovernanceRuleMemoSegment(input)}`;
 }

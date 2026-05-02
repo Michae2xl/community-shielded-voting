@@ -14,6 +14,10 @@ import { readSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { canRevealPollResults } from "@/lib/domain/results-visibility";
 import {
+  calculateSingleChoiceOutcome,
+  presentGovernanceOutcome
+} from "@/lib/domain/governance";
+import {
   buildAdminTurnout,
   buildAdminVoterRows
 } from "@/lib/domain/admin-voter-rows";
@@ -150,6 +154,9 @@ export default async function AdminPollPage({
       optionDLabel: true,
       optionELabel: true,
       status: true,
+      voteModel: true,
+      quorumPercent: true,
+      passingThresholdPercent: true,
       opensAt: true,
       closesAt: true,
       anchorTxid: true,
@@ -252,6 +259,15 @@ export default async function AdminPollPage({
     (invite) => invite.status === "FAILED"
   ).length;
   const turnout = buildAdminTurnout(poll.voterAccesses);
+  const governanceOutcome = calculateSingleChoiceOutcome({
+    isClosed: resultsVisible,
+    totalEligible: turnout.total,
+    totalConfirmed: tally.totalConfirmed,
+    countA: tally.countA,
+    voteModel: poll.voteModel,
+    quorumPercent: poll.quorumPercent,
+    passingThresholdPercent: poll.passingThresholdPercent
+  });
   const emailDeliveryConfigured = Boolean(
     process.env.RESEND_API_KEY && process.env.RESEND_FROM_EMAIL
   );
@@ -308,6 +324,14 @@ export default async function AdminPollPage({
                   ? "Individual completion is now visible."
                   : "Individual completion stays hidden until close."}
               </p>
+            </article>
+            <article className="editorial-note-card">
+              <span className="section-label">Governance rule</span>
+              <strong>
+                Quorum {governanceOutcome.quorumPercent}% · Pass{" "}
+                {governanceOutcome.passingThresholdPercent}%
+              </strong>
+              <p>Single-choice result: A over all valid votes.</p>
             </article>
           </div>
           <div className="editorial-tab-row" role="tablist" aria-label="Poll dashboard tabs">
@@ -510,6 +534,18 @@ export default async function AdminPollPage({
                 for admin decision-making.
               </p>
               <div className="editorial-metric-grid">
+                <MetricCard
+                  label="Decision"
+                  value={presentGovernanceOutcome(governanceOutcome.outcome)}
+                />
+                <MetricCard
+                  label="Approval"
+                  value={`${governanceOutcome.approvalPercent}% / ${governanceOutcome.passingThresholdPercent}%`}
+                />
+                <MetricCard
+                  label="Quorum"
+                  value={`${governanceOutcome.turnoutPercent}% / ${governanceOutcome.quorumPercent}%`}
+                />
                 <MetricCard label="Confirmed" value={tally.totalConfirmed} />
                 {optionEntries.map((entry) => (
                   <MetricCard

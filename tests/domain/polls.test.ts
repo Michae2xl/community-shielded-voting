@@ -12,10 +12,12 @@ describe("poll domain primitives", () => {
         pollId: "poll_123",
         questionHash: hash,
         opensAt: "2026-05-01T10:00:00.000Z",
-        closesAt: "2026-05-03T10:00:00.000Z"
+        closesAt: "2026-05-03T10:00:00.000Z",
+        quorumPercent: 40,
+        passingThresholdPercent: 67
       })
     ).toBe(
-      `POLL|v1|poll_123|${hash}|2026-05-01T10:00:00.000Z|2026-05-03T10:00:00.000Z`
+      `POLL|v2|poll_123|${hash}|2026-05-01T10:00:00.000Z|2026-05-03T10:00:00.000Z|SINGLE_CHOICE|Q40|T67`
     );
   });
 

@@ -28,6 +28,10 @@ enum PollStatus {
   ARCHIVED
 }
 
+enum PollVoteModel {
+  SINGLE_CHOICE
+}
+
 enum TicketStatus {
   ISSUED
   LOCKED
@@ -100,6 +104,9 @@ model Poll {
   optionDLabel String?
   optionELabel String?
   status       PollStatus        @default(DRAFT)
+  voteModel    PollVoteModel     @default(SINGLE_CHOICE)
+  quorumPercent Int              @default(40)
+  passingThresholdPercent Int    @default(67)
   anchorTxid   String?
   anchorHeight Int?
   questionHash String

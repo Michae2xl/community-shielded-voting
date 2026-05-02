@@ -20,6 +20,11 @@ type PollResponse = {
     activeOptions: OptionLetter[];
     optionLabels: Record<OptionLetter, string>;
     status: string;
+    governance?: {
+      voteModel: string;
+      quorumPercent: number;
+      passingThresholdPercent: number;
+    };
     feeZec: string;
     opensAt: string;
     closesAt: string;
@@ -421,6 +426,17 @@ export default function PollVotePageClient({
           </div>
           <div className="meta-chip-row">
             <span className="meta-chip">Poll {pollId}</span>
+            {poll?.governance ? (
+              <>
+                <span className="meta-chip">Single choice</span>
+                <span className="meta-chip">
+                  Quorum {poll.governance.quorumPercent}%
+                </span>
+                <span className="meta-chip">
+                  Pass {poll.governance.passingThresholdPercent}%
+                </span>
+              </>
+            ) : null}
             <span className="meta-chip">ZIP-321 QR</span>
             <span className="meta-chip meta-chip--mint">{accessChip}</span>
           </div>

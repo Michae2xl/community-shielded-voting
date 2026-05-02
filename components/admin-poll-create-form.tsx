@@ -6,6 +6,10 @@ import {
   formatOfficialPollDateTime,
   MIN_POLL_WINDOW_HOURS
 } from "@/lib/domain/poll-window";
+import {
+  DEFAULT_PASSING_THRESHOLD_PERCENT,
+  DEFAULT_QUORUM_PERCENT
+} from "@/lib/domain/governance";
 
 type DraftVoterRow = {
   id: string;
@@ -238,30 +242,41 @@ export function AdminPollCreateForm() {
       <section className="editorial-module">
         <div className="editorial-module-head">
           <p className="section-label">Answers</p>
-          <h3>Visible labels for rails A-E</h3>
+          <h3>Single-choice labels</h3>
         </div>
         <div className="editorial-option-grid">
           <label className="field">
             <span className="field-label">A label</span>
-            <input id="optionALabel" name="optionALabel" placeholder="Approve" required />
+            <input id="optionALabel" name="optionALabel" defaultValue="Approve" required />
           </label>
           <label className="field">
             <span className="field-label">B label</span>
-            <input id="optionBLabel" name="optionBLabel" placeholder="Reject" required />
+            <input id="optionBLabel" name="optionBLabel" defaultValue="Reject" required />
           </label>
           <label className="field">
             <span className="field-label">C label</span>
-            <input id="optionCLabel" name="optionCLabel" placeholder="Optional" />
-          </label>
-          <label className="field">
-            <span className="field-label">D label</span>
-            <input id="optionDLabel" name="optionDLabel" placeholder="Optional" />
-          </label>
-          <label className="field">
-            <span className="field-label">E label</span>
-            <input id="optionELabel" name="optionELabel" placeholder="Optional" />
+            <input id="optionCLabel" name="optionCLabel" defaultValue="Abstain" />
           </label>
         </div>
+      </section>
+
+      <section className="editorial-module">
+        <div className="editorial-module-head">
+          <p className="section-label">Governance rule</p>
+          <h3>DAO DAO single-choice outcome</h3>
+        </div>
+        <div className="meta-chip-row">
+          <span className="meta-chip">Single choice</span>
+          <span className="meta-chip">Quorum {DEFAULT_QUORUM_PERCENT}%</span>
+          <span className="meta-chip">
+            Pass {DEFAULT_PASSING_THRESHOLD_PERCENT}%
+          </span>
+          <span className="meta-chip">A / all valid votes</span>
+        </div>
+        <p className="field-hint">
+          Abstain counts toward quorum. The pass threshold is calculated from
+          all valid votes after quorum is met.
+        </p>
       </section>
 
       <section className="editorial-module">

@@ -63,6 +63,9 @@ export async function GET(
       optionDLabel: true,
       optionELabel: true,
       status: true,
+      voteModel: true,
+      quorumPercent: true,
+      passingThresholdPercent: true,
       feeZat: true,
       opensAt: true,
       closesAt: true
@@ -80,6 +83,11 @@ export async function GET(
       activeOptions: getActiveOptionLetters(poll),
       optionLabels: getPollOptionLabelMap(poll),
       status: poll.status,
+      governance: {
+        voteModel: poll.voteModel,
+        quorumPercent: poll.quorumPercent,
+        passingThresholdPercent: poll.passingThresholdPercent
+      },
       feeZec: formatZatToZec(poll.feeZat),
       opensAt: poll.opensAt.toISOString(),
       closesAt: poll.closesAt.toISOString()

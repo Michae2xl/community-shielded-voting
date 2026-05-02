@@ -2,6 +2,10 @@ import Link from "next/link";
 import { MarkdownInline } from "@/components/markdown-text";
 import { readSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
+import {
+  calculateSingleChoiceOutcome,
+  presentGovernanceOutcome
+} from "@/lib/domain/governance";
 import { getPollOptionEntries } from "@/lib/domain/options";
 import {
   getDisplayUrlLabel,
@@ -65,6 +69,9 @@ export default async function PollsPage() {
       id: true,
       question: true,
       status: true,
+      voteModel: true,
+      quorumPercent: true,
+      passingThresholdPercent: true,
       optionALabel: true,
       optionBLabel: true,
       optionCLabel: true,
@@ -157,6 +164,28 @@ export default async function PollsPage() {
                 const eligibleTotal = (count?.eligibility ?? 0) + (count?.voterAccesses ?? 0);
                 const turnout = formatTurnout(tally.totalConfirmed, eligibleTotal);
                 const showTurnout = isClosedPoll(poll.status) && eligibleTotal > 0;
+                const outcome = calculateSingleChoiceOutcome({
+                  isClosed: isClosedPoll(poll.status),
+                  totalEligible: eligibleTotal,
+                  totalConfirmed: tally.totalConfirmed,
+                  countA: tally.countA,
+                  voteModel: (
+                    poll as {
+                      voteModel?: string | null;
+                    }
+                  ).voteModel,
+                  quorumPercent: (
+                    poll as {
+                      quorumPercent?: number | null;
+                    }
+                  ).quorumPercent,
+                  passingThresholdPercent: (
+                    poll as {
+                      passingThresholdPercent?: number | null;
+                    }
+                  ).passingThresholdPercent
+                });
+                const showOutcome = showTurnout && outcome.outcome !== "PENDING";
 
                 return (
                   <article key={poll.id} className="poll-summary-card">
@@ -205,6 +234,17 @@ export default async function PollsPage() {
                         <span>Turnout</span>
                         <strong>{turnout.percent}</strong>
                         <span>{turnout.detail}</span>
+                        <span>Quorum {outcome.quorumPercent}%</span>
+                      </div>
+                    ) : null}
+                    {showOutcome ? (
+                      <div className="poll-summary-decision" aria-label="Governance outcome">
+                        <span>Decision</span>
+                        <strong>{presentGovernanceOutcome(outcome.outcome)}</strong>
+                        <span>
+                          Approval {outcome.approvalPercent}% /{" "}
+                          {outcome.passingThresholdPercent}%
+                        </span>
                       </div>
                     ) : null}
                     <div className="poll-summary-options">

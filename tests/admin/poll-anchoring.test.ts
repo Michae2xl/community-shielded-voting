@@ -4,6 +4,9 @@ type PollRecord = {
   id: string;
   status: "DRAFT" | "ANCHORING" | "SCHEDULED";
   questionHash: string;
+  voteModel: "SINGLE_CHOICE";
+  quorumPercent: number;
+  passingThresholdPercent: number;
   opensAt: Date;
   closesAt: Date;
   anchorTxid: string | null;
@@ -34,6 +37,9 @@ function installPollState() {
     id: "poll_1",
     status: "DRAFT",
     questionHash: "hash_1",
+    voteModel: "SINGLE_CHOICE",
+    quorumPercent: 40,
+    passingThresholdPercent: 67,
     opensAt: new Date("2026-05-01T10:00:00.000Z"),
     closesAt: new Date("2026-05-03T10:00:00.000Z"),
     anchorTxid: null
@@ -76,7 +82,7 @@ describe("poll anchoring", () => {
     const memo = await buildAndStoreAnchorMemo("poll_1");
 
     expect(memo).toBe(
-      "POLL|v1|poll_1|hash_1|2026-05-01T10:00:00.000Z|2026-05-03T10:00:00.000Z"
+      "POLL|v2|poll_1|hash_1|2026-05-01T10:00:00.000Z|2026-05-03T10:00:00.000Z|SINGLE_CHOICE|Q40|T67"
     );
     expect(poll.status).toBe("ANCHORING");
     expect(updateManyMock).toHaveBeenCalledWith({
