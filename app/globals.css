@@ -1177,6 +1177,24 @@ button[type="submit"] {
   color: var(--ink-primary);
 }
 
+.poll-summary-turnout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  color: var(--ink-secondary);
+  font-family: var(--font-technical);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.poll-summary-turnout strong {
+  color: var(--accent-brass-soft);
+  font-size: 1rem;
+}
+
 .poll-summary-options {
   display: grid;
   gap: 8px;

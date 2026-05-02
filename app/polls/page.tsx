@@ -20,6 +20,19 @@ function formatVotePercentage(count: number, totalConfirmed: number) {
   return `${Math.round((count / totalConfirmed) * 100)}%`;
 }
 
+function formatTurnout(completed: number, total: number) {
+  const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+  return {
+    percent: `${percent}%`,
+    detail: `${completed}/${total} voted`
+  };
+}
+
+function isClosedPoll(status: string) {
+  return status === "CLOSED" || status === "FINALIZED" || status === "ARCHIVED";
+}
+
 export default async function PollsPage() {
   const session = await readSession();
   const now = new Date();
@@ -65,6 +78,12 @@ export default async function PollsPage() {
           countD: true,
           countE: true,
           totalConfirmed: true
+        }
+      },
+      _count: {
+        select: {
+          eligibility: true,
+          voterAccesses: true
         }
       }
     }
@@ -127,6 +146,17 @@ export default async function PollsPage() {
                   countD: 0,
                   countE: 0
                 };
+                const count = (
+                  poll as {
+                    _count?: {
+                      eligibility: number;
+                      voterAccesses: number;
+                    };
+                  }
+                )._count;
+                const eligibleTotal = (count?.eligibility ?? 0) + (count?.voterAccesses ?? 0);
+                const turnout = formatTurnout(tally.totalConfirmed, eligibleTotal);
+                const showTurnout = isClosedPoll(poll.status) && eligibleTotal > 0;
 
                 return (
                   <article key={poll.id} className="poll-summary-card">
@@ -170,6 +200,13 @@ export default async function PollsPage() {
                     <p className="poll-summary-total">
                       {formatVoteCount(tally.totalConfirmed)}
                     </p>
+                    {showTurnout ? (
+                      <div className="poll-summary-turnout" aria-label="Turnout">
+                        <span>Turnout</span>
+                        <strong>{turnout.percent}</strong>
+                        <span>{turnout.detail}</span>
+                      </div>
+                    ) : null}
                     <div className="poll-summary-options">
                       {getPollOptionEntries(poll).map(({ letter, label }) => (
                         <div key={letter} className="poll-summary-option">

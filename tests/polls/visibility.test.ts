@@ -383,6 +383,10 @@ describe("voter poll visibility", () => {
           countC: 0,
           countD: 0,
           countE: 0
+        },
+        _count: {
+          eligibility: 0,
+          voterAccesses: 18
         }
       }
     ]);
@@ -393,6 +397,9 @@ describe("voter poll visibility", () => {
     expect(screen.getByText("Closed poll")).toBeInTheDocument();
     expect(screen.getByText("CLOSED")).toHaveClass("poll-summary-status");
     expect(screen.getByText("15 valid votes")).toBeInTheDocument();
+    expect(screen.getByText("Turnout")).toBeInTheDocument();
+    expect(screen.getByText("83%")).toBeInTheDocument();
+    expect(screen.getByText("15/18 voted")).toBeInTheDocument();
     expect(screen.getByText("60%")).toBeInTheDocument();
     expect(screen.getByText("40%")).toBeInTheDocument();
   });
