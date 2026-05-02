@@ -10,9 +10,13 @@ function formatZatToZec(value: bigint) {
 }
 
 export async function GET() {
+  const now = new Date();
   const polls = await db.poll.findMany({
     where: {
-      status: "OPEN"
+      status: "OPEN",
+      closesAt: {
+        gt: now
+      }
     },
     orderBy: {
       createdAt: "desc"

@@ -22,10 +22,14 @@ function formatVotePercentage(count: number, totalConfirmed: number) {
 
 export default async function PollsPage() {
   const session = await readSession();
+  const now = new Date();
 
   const polls = await db.poll.findMany({
     where: {
-      status: "OPEN" as const
+      status: "OPEN" as const,
+      closesAt: {
+        gt: now
+      }
     },
     orderBy: {
       createdAt: "desc"

@@ -48,7 +48,10 @@ describe("voter poll visibility", () => {
       1,
       expect.objectContaining({
         where: {
-          status: "OPEN"
+          status: "OPEN",
+          closesAt: {
+            gt: expect.any(Date)
+          }
         },
         orderBy: {
           createdAt: "desc"
@@ -59,7 +62,10 @@ describe("voter poll visibility", () => {
       2,
       expect.objectContaining({
         where: {
-          status: "OPEN"
+          status: "OPEN",
+          closesAt: {
+            gt: expect.any(Date)
+          }
         },
         orderBy: {
           createdAt: "desc"
@@ -86,7 +92,10 @@ describe("voter poll visibility", () => {
       1,
       expect.objectContaining({
         where: {
-          status: "OPEN"
+          status: "OPEN",
+          closesAt: {
+            gt: expect.any(Date)
+          }
         },
         orderBy: {
           createdAt: "desc"
@@ -97,7 +106,10 @@ describe("voter poll visibility", () => {
       2,
       expect.objectContaining({
         where: {
-          status: "OPEN"
+          status: "OPEN",
+          closesAt: {
+            gt: expect.any(Date)
+          }
         },
         orderBy: {
           createdAt: "desc"
