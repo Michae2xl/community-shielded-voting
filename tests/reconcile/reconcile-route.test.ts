@@ -7,12 +7,12 @@ const {
   dbMock,
   fetchIncomingVotesMock,
   syncWalletMock,
-  deliverConfirmedVoteReceiptEmailsForPollMock
+  deliverConfirmedVoteReceiptsForPollMock
 } = vi.hoisted(() => ({
   dbMock: {},
   fetchIncomingVotesMock: vi.fn(),
   syncWalletMock: vi.fn(),
-  deliverConfirmedVoteReceiptEmailsForPollMock: vi.fn()
+  deliverConfirmedVoteReceiptsForPollMock: vi.fn()
 }));
 
 vi.mock("@/lib/db", () => ({
@@ -27,8 +27,7 @@ vi.mock("@/lib/zcash/zkool-client", () => ({
 }));
 
 vi.mock("@/lib/services/vote-receipts", () => ({
-  deliverConfirmedVoteReceiptEmailsForPoll:
-    deliverConfirmedVoteReceiptEmailsForPollMock
+  deliverConfirmedVoteReceiptsForPoll: deliverConfirmedVoteReceiptsForPollMock
 }));
 
 import { POST as reconcilePollVotes } from "@/app/api/internal/polls/[pollId]/reconcile/route";
@@ -290,6 +289,9 @@ function makeDbApi(state: TestState, includeTransaction = true) {
         return state.tally;
       })
     },
+    publicAuditEvent: {
+      create: vi.fn(async ({ data }: { data: unknown }) => data)
+    },
     ...(includeTransaction
       ? {
           $transaction: vi.fn(async (callback: (tx: ReturnType<typeof makeDbApi>) => Promise<unknown>) => {
@@ -334,8 +336,8 @@ beforeEach(() => {
   process.env.ZCAP_INTERNAL_SECRET = TEST_INTERNAL_SECRET;
   fetchIncomingVotesMock.mockReset();
   syncWalletMock.mockReset();
-  deliverConfirmedVoteReceiptEmailsForPollMock.mockReset();
-  deliverConfirmedVoteReceiptEmailsForPollMock.mockResolvedValue({
+  deliverConfirmedVoteReceiptsForPollMock.mockReset();
+  deliverConfirmedVoteReceiptsForPollMock.mockResolvedValue({
     sent: 0,
     skipped: 0,
     failed: 0
@@ -402,7 +404,7 @@ describe("internal mutation routes", () => {
     await expect(response.json()).resolves.toEqual({ processed: 0 });
     expect(state.receipts).toHaveLength(0);
     expect(state.tally).toBeNull();
-    expect(deliverConfirmedVoteReceiptEmailsForPollMock).toHaveBeenCalledWith("poll_1");
+    expect(deliverConfirmedVoteReceiptsForPollMock).toHaveBeenCalledWith("poll_1");
   });
 
   it("confirms the first vote, records later attempts as duplicate ignored, and stays idempotent on replay", async () => {
@@ -438,7 +440,7 @@ describe("internal mutation routes", () => {
     });
     expect(state.receipts[0]?.receiptPublicId).toMatch(/^receipt_/);
     expect(state.receipts.map((receipt) => receipt.status)).toEqual(["CONFIRMED"]);
-    expect(deliverConfirmedVoteReceiptEmailsForPollMock).toHaveBeenCalledWith("poll_1");
+    expect(deliverConfirmedVoteReceiptsForPollMock).toHaveBeenCalledWith("poll_1");
 
     fetchIncomingVotesMock.mockResolvedValueOnce([
       makeIncomingVote({
@@ -543,6 +545,6 @@ describe("internal mutation routes", () => {
       status: "CONFIRMED"
     });
     expect(state.receipts[0]?.receiptPublicId).toMatch(/^receipt_/);
-    expect(deliverConfirmedVoteReceiptEmailsForPollMock).toHaveBeenCalledWith("poll_1");
+    expect(deliverConfirmedVoteReceiptsForPollMock).toHaveBeenCalledWith("poll_1");
   });
 });

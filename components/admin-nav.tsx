@@ -14,6 +14,9 @@ export function AdminNav() {
           <Link href="/admin/polls" className="meta-chip">
             Poll directory
           </Link>
+          <Link href="/admin/members" className="meta-chip">
+            DAO members
+          </Link>
         </div>
       </nav>
     </div>

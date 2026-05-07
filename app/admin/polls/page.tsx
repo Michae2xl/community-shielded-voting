@@ -81,6 +81,9 @@ export default async function AdminPollDirectoryPage() {
             </div>
             <div className="editorial-inline-actions">
               <span className="status-pill">Polls</span>
+              <Link href="/admin/members" className="secondary-button">
+                DAO members
+              </Link>
               <Link href="/admin/polls/new" className="button-link button-link-primary">
                 Create poll
               </Link>

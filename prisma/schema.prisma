@@ -65,6 +65,27 @@ enum PollInviteDeliveryChannel {
   SIGNAL
 }
 
+enum PollAudience {
+  CUSTOM
+  DAO_MEMBERS
+}
+
+enum DaoMemberStatus {
+  ACTIVE
+  REMOVED
+}
+
+enum DaoMembershipActionType {
+  ADD_MEMBER
+  REMOVE_MEMBER
+}
+
+enum DaoMembershipActionStatus {
+  PENDING
+  APPLIED
+  REJECTED
+}
+
 enum PollVoterAccessStatus {
   ACTIVE
   USED
@@ -114,6 +135,7 @@ model Poll {
   passingThresholdPercent Int    @default(67)
   anchorTxid   String?
   anchorHeight Int?
+  audience     PollAudience      @default(CUSTOM)
   questionHash String
   feeZat       BigInt
   opensAt      DateTime
@@ -130,6 +152,9 @@ model Poll {
   voterAccesses PollVoterAccess[]
   tally        PollTally?
   publicAuditEvents PublicAuditEvent[]
+  membershipAction DaoMembershipAction?
+  membersAdded DaoMember[] @relation("DaoMemberAddedByPoll")
+  membersRemoved DaoMember[] @relation("DaoMemberRemovedByPoll")
 }
 
 model PollEligibility {
@@ -231,6 +256,35 @@ model PollVoterAccess {
   @@unique([pollId, nick])
   @@unique([pollId, email])
   @@unique([pollId, signalUsername])
+}
+
+model DaoMember {
+  id              String          @id @default(cuid())
+  nick            String          @unique
+  signalUsername  String          @unique
+  status          DaoMemberStatus @default(ACTIVE)
+  addedByPollId   String?
+  removedByPollId String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  addedByPoll     Poll?           @relation("DaoMemberAddedByPoll", fields: [addedByPollId], references: [id], onDelete: SetNull)
+  removedByPoll   Poll?           @relation("DaoMemberRemovedByPoll", fields: [removedByPollId], references: [id], onDelete: SetNull)
+  removalActions  DaoMembershipAction[] @relation("DaoMembershipRemovalTarget")
+}
+
+model DaoMembershipAction {
+  id              String                     @id @default(cuid())
+  pollId          String                     @unique
+  type            DaoMembershipActionType
+  status          DaoMembershipActionStatus  @default(PENDING)
+  nick            String
+  signalUsername  String
+  targetMemberId  String?
+  appliedAt       DateTime?
+  createdAt       DateTime                   @default(now())
+  updatedAt       DateTime                   @updatedAt
+  poll            Poll                       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  targetMember    DaoMember?                 @relation("DaoMembershipRemovalTarget", fields: [targetMemberId], references: [id], onDelete: SetNull)
 }
 
 model PollInvite {

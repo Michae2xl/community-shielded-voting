@@ -30,6 +30,23 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData();
     const voters = parsePollVoterLines(String(formData.get("voters") ?? ""));
+    const audience = String(formData.get("audience") ?? "CUSTOM");
+    const membershipActionType = String(
+      formData.get("membershipActionType") ?? ""
+    );
+    const membershipAction =
+      membershipActionType === "ADD_MEMBER"
+        ? {
+            type: "ADD_MEMBER" as const,
+            nick: String(formData.get("membershipNick") ?? ""),
+            signalUsername: String(formData.get("membershipSignalUsername") ?? "")
+          }
+        : membershipActionType === "REMOVE_MEMBER"
+          ? {
+              type: "REMOVE_MEMBER" as const,
+              targetMemberId: String(formData.get("membershipTargetMemberId") ?? "")
+            }
+          : undefined;
 
     const poll = await createDraftPoll(
       {
@@ -41,7 +58,9 @@ export async function POST(request: NextRequest) {
         optionCLabel: String(formData.get("optionCLabel") ?? ""),
         optionDLabel: String(formData.get("optionDLabel") ?? ""),
         optionELabel: String(formData.get("optionELabel") ?? ""),
-        voters
+        audience: audience as "CUSTOM" | "DAO_MEMBERS",
+        voters,
+        membershipAction
       },
       session.userId
     );

@@ -1,5 +1,6 @@
 import { PollStatus, TicketStatus, VoteRequestStatus } from "@prisma/client";
 import { db } from "@/lib/db";
+import { applyDaoMembershipActionForPoll } from "@/lib/services/dao-members";
 
 export type PollLifecycleTransition =
   | "NONE"
@@ -91,6 +92,10 @@ export async function syncPollLifecycleForPoll(
       });
     }
   });
+
+  if (nextStatus === PollStatus.CLOSED) {
+    await applyDaoMembershipActionForPoll(poll.id);
+  }
 
   return {
     pollId: poll.id,

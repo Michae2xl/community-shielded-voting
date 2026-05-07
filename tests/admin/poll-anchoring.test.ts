@@ -12,8 +12,9 @@ type PollRecord = {
   anchorTxid: string | null;
 };
 
-const { findUniqueMock, updateManyMock } = vi.hoisted(() => ({
+const { findUniqueMock, publicAuditEventCreateMock, updateManyMock } = vi.hoisted(() => ({
   findUniqueMock: vi.fn(),
+  publicAuditEventCreateMock: vi.fn(),
   updateManyMock: vi.fn()
 }));
 
@@ -22,6 +23,9 @@ vi.mock("@/lib/db", () => ({
     poll: {
       findUnique: findUniqueMock,
       updateMany: updateManyMock
+    },
+    publicAuditEvent: {
+      create: publicAuditEventCreateMock
     }
   }
 }));
@@ -72,6 +76,8 @@ function installPollState() {
 
 beforeEach(() => {
   findUniqueMock.mockReset();
+  publicAuditEventCreateMock.mockReset();
+  publicAuditEventCreateMock.mockResolvedValue({});
   updateManyMock.mockReset();
 });
 

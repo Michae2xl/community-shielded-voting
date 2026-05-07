@@ -23,6 +23,14 @@ type PreparedVoters = {
   partialRowNumbers: number[];
 };
 
+type DaoMemberOption = {
+  id: string;
+  nick: string;
+  signalUsername: string;
+};
+
+type ProposalType = "STANDARD" | "ADD_MEMBER" | "REMOVE_MEMBER";
+
 function generateRowId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
     return crypto.randomUUID();
@@ -124,12 +132,23 @@ function parseBulkVoters(input: string) {
     });
 }
 
-export function AdminPollCreateForm() {
+export function AdminPollCreateForm({
+  daoMembers = []
+}: {
+  daoMembers?: DaoMemberOption[];
+}) {
   const router = useRouter();
+  const hasDaoMembers = daoMembers.length > 0;
   const [opensAtLocal, setOpensAtLocal] = useState("");
   const [closesAtLocal, setClosesAtLocal] = useState("");
   const [rows, setRows] = useState<DraftVoterRow[]>([createRow()]);
   const [bulkInput, setBulkInput] = useState("");
+  const [proposalType, setProposalType] = useState<ProposalType>("STANDARD");
+  const [membershipNick, setMembershipNick] = useState("");
+  const [membershipSignalUsername, setMembershipSignalUsername] = useState("");
+  const [membershipTargetMemberId, setMembershipTargetMemberId] = useState(
+    daoMembers[0]?.id ?? ""
+  );
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const preparedVoters = useMemo(() => prepareVoters(rows), [rows]);
@@ -167,20 +186,49 @@ export function AdminPollCreateForm() {
     event.preventDefault();
     setError(null);
 
-    if (preparedVoters.partialRowNumbers.length) {
-      setError(
-        `Complete both user ID and Signal username for voter row${preparedVoters.partialRowNumbers.length === 1 ? "" : "s"} ${preparedVoters.partialRowNumbers.join(", ")}.`
-      );
-      return;
+    if (!hasDaoMembers) {
+      if (preparedVoters.partialRowNumbers.length) {
+        setError(
+          `Complete both user ID and Signal username for voter row${preparedVoters.partialRowNumbers.length === 1 ? "" : "s"} ${preparedVoters.partialRowNumbers.join(", ")}.`
+        );
+        return;
+      }
+
+      if (preparedVoters.completeCount === 0) {
+        setError("Add at least one voter with both user ID and Signal username.");
+        return;
+      }
     }
 
-    if (preparedVoters.completeCount === 0) {
-      setError("Add at least one voter with both user ID and Signal username.");
+    if (hasDaoMembers && proposalType === "ADD_MEMBER") {
+      if (!membershipNick.trim() || !membershipSignalUsername.trim()) {
+        setError("Add DAO member proposals require a nick and Signal username.");
+        return;
+      }
+    }
+
+    if (hasDaoMembers && proposalType === "REMOVE_MEMBER" && !membershipTargetMemberId) {
+      setError("Select the DAO member this removal proposal targets.");
       return;
     }
 
     const formData = new FormData(event.currentTarget);
-    formData.set("voters", preparedVoters.payload);
+    formData.set("audience", hasDaoMembers ? "DAO_MEMBERS" : "CUSTOM");
+    formData.set("voters", hasDaoMembers ? "" : preparedVoters.payload);
+
+    if (hasDaoMembers && proposalType !== "STANDARD") {
+      formData.set("membershipActionType", proposalType);
+
+      if (proposalType === "ADD_MEMBER") {
+        formData.set("membershipNick", membershipNick);
+        formData.set("membershipSignalUsername", membershipSignalUsername);
+      } else {
+        formData.set("membershipTargetMemberId", membershipTargetMemberId);
+      }
+    } else {
+      formData.set("membershipActionType", "");
+    }
+
     const response = await fetch("/api/admin/polls", {
       method: "POST",
       body: formData
@@ -219,7 +267,7 @@ export function AdminPollCreateForm() {
         <span className="status-pill">Review first</span>
       </div>
       <p className="editorial-copy editorial-copy--wide">
-        Set the question, visible answers, voter table, and window. After this, the
+        Set the question, visible answers, voter basket, and window. After this, the
         admin lands on a review dashboard with a single primary action: open the poll.
       </p>
 
@@ -284,92 +332,217 @@ export function AdminPollCreateForm() {
       <section className="editorial-module">
         <div className="editorial-module-head">
           <p className="section-label">Voters</p>
-          <h3>Build the initial delivery list</h3>
+          <h3>{hasDaoMembers ? "Use the Zechub DAO member basket" : "Build the initial delivery list"}</h3>
         </div>
-        <p className="field-hint">
-          Required: at least one complete voter row. Use Signal usernames only,
-          including the numeric suffix. Phone numbers are not accepted.
-        </p>
-        <div className="editorial-table-wrap">
-          <table className="editorial-table">
-            <thead>
-              <tr>
-                <th>User ID</th>
-                <th>Signal username</th>
-                <th className="editorial-table-actions">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row, index) => (
-                <tr key={row.id}>
-                  <td>
-                    <input
-                      name={`voter-nick-${row.id}`}
-                      aria-label={`Voter nick ${index + 1}`}
-                      value={row.nick}
-                      onChange={(event) =>
-                        updateRow(row.id, "nick", event.currentTarget.value)
-                      }
-                      placeholder="voter01"
-                      autoComplete="off"
-                      data-lpignore="true"
-                      data-1p-ignore="true"
-                    />
-                  </td>
-                  <td>
-                    <input
-                      name={`voter-signal-${row.id}`}
-                      aria-label={`Voter Signal username ${index + 1}`}
-                      value={row.signalUsername}
-                      onChange={(event) =>
-                        updateRow(row.id, "signalUsername", event.currentTarget.value)
-                      }
-                      placeholder="username.42"
-                      autoComplete="off"
-                      data-lpignore="true"
-                      data-1p-ignore="true"
-                    />
-                  </td>
-                  <td className="editorial-table-actions">
-                    <button
-                      type="button"
-                      className="secondary-button editorial-inline-button"
-                      onClick={() => removeRow(row.id)}
-                      disabled={rows.length === 1}
-                    >
-                      Remove
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="editorial-inline-actions">
-          <button type="button" className="secondary-button" onClick={addRow}>
-            Add voter
-          </button>
-        </div>
-        <details className="editorial-disclosure">
-          <summary>Paste list in bulk</summary>
-          <div className="editorial-disclosure-body">
-            <textarea
-              value={bulkInput}
-              onChange={(event) => setBulkInput(event.currentTarget.value)}
-              placeholder={"voter01,username.42\nvoter02,another_user.99"}
-              autoComplete="off"
-              data-lpignore="true"
-              data-1p-ignore="true"
-            />
+        {hasDaoMembers ? (
+          <>
+            <p className="field-hint">
+              This poll will be sent to all active Zechub DAO members by Signal.
+              The admin cannot edit this basket here; membership changes require a
+              passed poll.
+            </p>
+            <div className="meta-chip-row">
+              <span className="meta-chip">DAO member basket</span>
+              <span className="meta-chip">{daoMembers.length} active voter(s)</span>
+              <span className="meta-chip">Signal only</span>
+            </div>
+            <div className="editorial-table-wrap">
+              <table className="editorial-table">
+                <thead>
+                  <tr>
+                    <th>User ID</th>
+                    <th>Signal username</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {daoMembers.map((member) => (
+                    <tr key={member.id}>
+                      <td>{member.nick}</td>
+                      <td>{member.signalUsername}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <input type="hidden" name="audience" value="DAO_MEMBERS" readOnly />
+            <input type="hidden" name="voters" value="" readOnly />
+          </>
+        ) : (
+          <>
+            <p className="field-hint">
+              Required: at least one complete voter row. Use Signal usernames only,
+              including the numeric suffix. Phone numbers are not accepted. This
+              manual setup is for the first basket or legacy custom polls only.
+            </p>
+            <div className="editorial-table-wrap">
+              <table className="editorial-table">
+                <thead>
+                  <tr>
+                    <th>User ID</th>
+                    <th>Signal username</th>
+                    <th className="editorial-table-actions">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row, index) => (
+                    <tr key={row.id}>
+                      <td>
+                        <input
+                          name={`voter-nick-${row.id}`}
+                          aria-label={`Voter nick ${index + 1}`}
+                          value={row.nick}
+                          onChange={(event) =>
+                            updateRow(row.id, "nick", event.currentTarget.value)
+                          }
+                          placeholder="voter01"
+                          autoComplete="off"
+                          data-lpignore="true"
+                          data-1p-ignore="true"
+                        />
+                      </td>
+                      <td>
+                        <input
+                          name={`voter-signal-${row.id}`}
+                          aria-label={`Voter Signal username ${index + 1}`}
+                          value={row.signalUsername}
+                          onChange={(event) =>
+                            updateRow(row.id, "signalUsername", event.currentTarget.value)
+                          }
+                          placeholder="username.42"
+                          autoComplete="off"
+                          data-lpignore="true"
+                          data-1p-ignore="true"
+                        />
+                      </td>
+                      <td className="editorial-table-actions">
+                        <button
+                          type="button"
+                          className="secondary-button editorial-inline-button"
+                          onClick={() => removeRow(row.id)}
+                          disabled={rows.length === 1}
+                        >
+                          Remove
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
             <div className="editorial-inline-actions">
-              <button type="button" className="secondary-button" onClick={applyBulkInput}>
-                Replace table rows
+              <button type="button" className="secondary-button" onClick={addRow}>
+                Add voter
               </button>
             </div>
-          </div>
-        </details>
-        <input type="hidden" name="voters" value={preparedVoters.payload} readOnly />
+            <details className="editorial-disclosure">
+              <summary>Paste list in bulk</summary>
+              <div className="editorial-disclosure-body">
+                <textarea
+                  value={bulkInput}
+                  onChange={(event) => setBulkInput(event.currentTarget.value)}
+                  placeholder={"voter01,username.42\nvoter02,another_user.99"}
+                  autoComplete="off"
+                  data-lpignore="true"
+                  data-1p-ignore="true"
+                />
+                <div className="editorial-inline-actions">
+                  <button type="button" className="secondary-button" onClick={applyBulkInput}>
+                    Replace table rows
+                  </button>
+                </div>
+              </div>
+            </details>
+            <input type="hidden" name="audience" value="CUSTOM" readOnly />
+            <input type="hidden" name="voters" value={preparedVoters.payload} readOnly />
+          </>
+        )}
       </section>
+
+      {hasDaoMembers ? (
+        <section className="editorial-module">
+          <div className="editorial-module-head">
+            <p className="section-label">Proposal type</p>
+            <h3>Standard decision or membership change</h3>
+          </div>
+          <p className="field-hint">
+            Membership changes are not direct admin actions. The poll is sent to
+            the current basket and the change applies only after the poll closes
+            with a passed decision.
+          </p>
+          <label className="field" htmlFor="proposalType">
+            <span className="field-label">Governance action</span>
+            <select
+              id="proposalType"
+              value={proposalType}
+              onChange={(event) => setProposalType(event.currentTarget.value as ProposalType)}
+            >
+              <option value="STANDARD">Standard poll</option>
+              <option value="ADD_MEMBER">Add DAO member if passed</option>
+              <option value="REMOVE_MEMBER">Remove DAO member if passed</option>
+            </select>
+          </label>
+          {proposalType === "ADD_MEMBER" ? (
+            <div className="editorial-option-grid">
+              <label className="field">
+                <span className="field-label">New member nick</span>
+                <input
+                  value={membershipNick}
+                  onChange={(event) => setMembershipNick(event.currentTarget.value)}
+                  placeholder="new_member"
+                  autoComplete="off"
+                  data-lpignore="true"
+                  data-1p-ignore="true"
+                />
+              </label>
+              <label className="field">
+                <span className="field-label">New member Signal username</span>
+                <input
+                  value={membershipSignalUsername}
+                  onChange={(event) =>
+                    setMembershipSignalUsername(event.currentTarget.value)
+                  }
+                  placeholder="username.42"
+                  autoComplete="off"
+                  data-lpignore="true"
+                  data-1p-ignore="true"
+                />
+              </label>
+            </div>
+          ) : null}
+          {proposalType === "REMOVE_MEMBER" ? (
+            <label className="field" htmlFor="membershipTargetMemberId">
+              <span className="field-label">Member to remove if passed</span>
+              <select
+                id="membershipTargetMemberId"
+                value={membershipTargetMemberId}
+                onChange={(event) =>
+                  setMembershipTargetMemberId(event.currentTarget.value)
+                }
+              >
+                {daoMembers.map((member) => (
+                  <option key={member.id} value={member.id}>
+                    {member.nick} · {member.signalUsername}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+          <input type="hidden" name="membershipActionType" value={proposalType} readOnly />
+          <input type="hidden" name="membershipNick" value={membershipNick} readOnly />
+          <input
+            type="hidden"
+            name="membershipSignalUsername"
+            value={membershipSignalUsername}
+            readOnly
+          />
+          <input
+            type="hidden"
+            name="membershipTargetMemberId"
+            value={membershipTargetMemberId}
+            readOnly
+          />
+        </section>
+      ) : null}
 
       <section className="editorial-module">
         <div className="editorial-module-head">

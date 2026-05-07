@@ -1,9 +1,17 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import NewPollPage from "@/app/admin/polls/new/page";
 
-const { pushMock } = vi.hoisted(() => ({
+const { daoMemberFindManyMock, pushMock } = vi.hoisted(() => ({
+  daoMemberFindManyMock: vi.fn(),
   pushMock: vi.fn()
+}));
+
+vi.mock("@/lib/db", () => ({
+  db: {
+    daoMember: {
+      findMany: daoMemberFindManyMock
+    }
+  }
 }));
 
 vi.mock("next/navigation", () => ({
@@ -13,14 +21,18 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/admin/polls/new"
 }));
 
+import NewPollPage from "@/app/admin/polls/new/page";
+
 describe("NewPollPage", () => {
   beforeEach(() => {
     pushMock.mockReset();
+    daoMemberFindManyMock.mockReset();
+    daoMemberFindManyMock.mockResolvedValue([]);
     vi.stubGlobal("fetch", vi.fn());
   });
 
-  it("publishes official UTC timestamps from the datetime inputs", () => {
-    const { container } = render(<NewPollPage />);
+  it("publishes official UTC timestamps from the datetime inputs", async () => {
+    const { container } = render(await NewPollPage());
 
     fireEvent.change(screen.getByLabelText(/^opens at/i), {
       target: { value: "2026-05-01T10:00" }
@@ -46,7 +58,7 @@ describe("NewPollPage", () => {
       new Response(JSON.stringify({ pollId: "poll_1" }), { status: 200 })
     );
 
-    render(<NewPollPage />);
+    render(await NewPollPage());
 
     fireEvent.change(screen.getByLabelText(/^question$/i), {
       target: { value: "Which option should we fund?" }
@@ -82,7 +94,7 @@ describe("NewPollPage", () => {
       new Response(JSON.stringify({ pollId: "poll_1" }), { status: 200 })
     );
 
-    render(<NewPollPage />);
+    render(await NewPollPage());
 
     fireEvent.change(screen.getByLabelText(/^question$/i), {
       target: { value: "Which option should we fund?" }
@@ -119,7 +131,7 @@ describe("NewPollPage", () => {
   });
 
   it("blocks submit when a voter row is only partially filled", async () => {
-    render(<NewPollPage />);
+    render(await NewPollPage());
 
     fireEvent.change(screen.getByLabelText(/^question$/i), {
       target: { value: "Which option should we fund?" }
@@ -153,5 +165,50 @@ describe("NewPollPage", () => {
     expect(
       screen.getByText(/complete both user id and signal username for voter row 2/i)
     ).toBeInTheDocument();
+  });
+
+  it("uses the DAO member basket when it has already been initialized", async () => {
+    daoMemberFindManyMock.mockResolvedValue([
+      {
+        id: "member_1",
+        nick: "michae2xl",
+        signalUsername: "michae2xl.42"
+      }
+    ]);
+    vi.mocked(globalThis.fetch).mockResolvedValue(
+      new Response(JSON.stringify({ pollId: "poll_1" }), { status: 200 })
+    );
+
+    render(await NewPollPage());
+
+    expect(screen.getAllByText(/dao member basket/i).length).toBeGreaterThan(0);
+    expect(screen.queryByLabelText(/^voter nick 1$/i)).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/^question$/i), {
+      target: { value: "Should we accept the next member proposal?" }
+    });
+    fireEvent.change(screen.getByLabelText(/^a label$/i), {
+      target: { value: "Approve" }
+    });
+    fireEvent.change(screen.getByLabelText(/^b label$/i), {
+      target: { value: "Reject" }
+    });
+    fireEvent.change(screen.getByLabelText(/^opens at/i), {
+      target: { value: "2026-05-01T10:00" }
+    });
+    fireEvent.change(screen.getByLabelText(/^closes at/i), {
+      target: { value: "2026-05-03T10:00" }
+    });
+
+    fireEvent.submit(screen.getByRole("button", { name: /create review draft/i }));
+
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(1));
+
+    const requestInit = vi.mocked(globalThis.fetch).mock.calls[0]?.[1] as
+      | RequestInit
+      | undefined;
+    const body = requestInit?.body as FormData;
+    expect(body.get("audience")).toBe("DAO_MEMBERS");
+    expect(body.get("voters")).toBe("");
   });
 });

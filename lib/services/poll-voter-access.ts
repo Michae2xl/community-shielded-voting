@@ -1,4 +1,5 @@
 import { randomBytes } from "node:crypto";
+import { PollAudience } from "@prisma/client";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
 import { db } from "@/lib/db";
 import { generateInviteToken } from "@/lib/domain/invites";
@@ -59,7 +60,8 @@ export async function createPollVoterAccesses(input: {
     where: { id: input.pollId },
     select: {
       id: true,
-      closesAt: true
+      closesAt: true,
+      audience: true
     }
   });
 
@@ -68,6 +70,14 @@ export async function createPollVoterAccesses(input: {
       "poll not found",
       404,
       "POLL_NOT_FOUND"
+    );
+  }
+
+  if (poll.audience === PollAudience.DAO_MEMBERS) {
+    throw new PollVoterAccessServiceError(
+      "DAO member poll rosters are locked",
+      409,
+      "DAO_POLL_ROSTER_LOCKED"
     );
   }
 
@@ -139,6 +149,11 @@ export async function removePendingPollVoterAccess(input: {
         select: {
           ticketId: true
         }
+      },
+      poll: {
+        select: {
+          audience: true
+        }
       }
     }
   });
@@ -148,6 +163,14 @@ export async function removePendingPollVoterAccess(input: {
       "voter not found",
       404,
       "POLL_VOTER_NOT_FOUND"
+    );
+  }
+
+  if (access.poll.audience === PollAudience.DAO_MEMBERS) {
+    throw new PollVoterAccessServiceError(
+      "DAO member poll rosters are locked",
+      409,
+      "DAO_POLL_ROSTER_LOCKED"
     );
   }
 

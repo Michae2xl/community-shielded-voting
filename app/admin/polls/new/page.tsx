@@ -1,8 +1,26 @@
 import Link from "next/link";
+import { DaoMemberStatus } from "@prisma/client";
 import { AdminPollCreateForm } from "@/components/admin-poll-create-form";
 import { ZcashBrandmark } from "@/components/zcash-brandmark";
+import { db } from "@/lib/db";
 
-export default function NewPollPage() {
+export const dynamic = "force-dynamic";
+
+export default async function NewPollPage() {
+  const daoMembers = await db.daoMember.findMany({
+    where: {
+      status: DaoMemberStatus.ACTIVE
+    },
+    orderBy: {
+      nick: "asc"
+    },
+    select: {
+      id: true,
+      nick: true,
+      signalUsername: true
+    }
+  });
+
   return (
     <main className="page-shell">
       <section className="workspace-shell">
@@ -24,9 +42,10 @@ export default function NewPollPage() {
               <span className="status-pill">New poll</span>
             </div>
             <p className="editorial-copy editorial-copy--wide">
-              This first step is intentionally calm: define the question, add voters,
-              and confirm the window. The blockchain and delivery work happen from the
-              review screen through one guided action.
+              This first step is intentionally calm: define the question, select
+              the governance path, and confirm the window. The blockchain and
+              Signal delivery work happen from the review screen through one
+              guided action.
             </p>
             <div className="editorial-card-grid">
               <article className="editorial-note-card">
@@ -36,8 +55,8 @@ export default function NewPollPage() {
               </article>
               <article className="editorial-note-card">
                 <span className="section-label">Module 2</span>
-                <strong>Voter table</strong>
-                <p>Start line by line, then use bulk paste only when it actually saves time.</p>
+                <strong>DAO member basket</strong>
+                <p>Once initialized, every poll targets the active Signal roster.</p>
               </article>
               <article className="editorial-note-card">
                 <span className="section-label">Module 3</span>
@@ -47,7 +66,7 @@ export default function NewPollPage() {
             </div>
           </section>
 
-          <AdminPollCreateForm />
+          <AdminPollCreateForm daoMembers={daoMembers} />
         </div>
       </section>
     </main>

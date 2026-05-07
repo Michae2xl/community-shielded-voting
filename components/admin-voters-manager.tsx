@@ -29,10 +29,12 @@ function parseBulkVoters(input: string) {
 
 export function AdminVotersManager({
   pollId,
-  rows
+  rows,
+  rosterLocked = false
 }: {
   pollId: string;
   rows: VoterRow[];
+  rosterLocked?: boolean;
 }) {
   const router = useRouter();
   const [nick, setNick] = useState("");
@@ -102,50 +104,59 @@ export function AdminVotersManager({
       <section className="editorial-module">
         <div className="editorial-module-head">
           <p className="section-label">Add voter</p>
-          <h3>Keep the delivery list editable</h3>
+          <h3>{rosterLocked ? "DAO roster is governed" : "Keep the delivery list editable"}</h3>
         </div>
-        <div className="editorial-inline-form">
-          <input
-            aria-label="Nick"
-            value={nick}
-            onChange={(event) => setNick(event.currentTarget.value)}
-            placeholder="nick"
-          />
-          <input
-            aria-label="Signal username"
-            value={signalUsername}
-            onChange={(event) => setSignalUsername(event.currentTarget.value)}
-            placeholder="username.42"
-          />
-          <button
-            type="button"
-            className="button-link button-link-primary"
-            disabled={isSaving || !nick.trim() || !signalUsername.trim()}
-            onClick={() => void createVoters([{ nick, signalUsername }])}
-          >
-            {isSaving ? "Adding..." : "Add voter"}
-          </button>
-        </div>
-        <details className="editorial-disclosure">
-          <summary>Paste list in bulk</summary>
-          <div className="editorial-disclosure-body">
-            <textarea
-              value={bulkInput}
-              onChange={(event) => setBulkInput(event.currentTarget.value)}
-              placeholder={"michae2xl,username.42\nalice,alice_user.99"}
-            />
-            <div className="editorial-inline-actions">
+        {rosterLocked ? (
+          <p className="field-hint">
+            This poll uses the fixed Zechub DAO member basket. Admin cannot add or
+            remove rows here; create a membership proposal and let the poll decide.
+          </p>
+        ) : (
+          <>
+            <div className="editorial-inline-form">
+              <input
+                aria-label="Nick"
+                value={nick}
+                onChange={(event) => setNick(event.currentTarget.value)}
+                placeholder="nick"
+              />
+              <input
+                aria-label="Signal username"
+                value={signalUsername}
+                onChange={(event) => setSignalUsername(event.currentTarget.value)}
+                placeholder="username.42"
+              />
               <button
                 type="button"
-                className="secondary-button"
-                disabled={isSaving || !parsedBulk.length}
-                onClick={() => void createVoters(parsedBulk)}
+                className="button-link button-link-primary"
+                disabled={isSaving || !nick.trim() || !signalUsername.trim()}
+                onClick={() => void createVoters([{ nick, signalUsername }])}
               >
-                {isSaving ? "Adding..." : "Add pasted voters"}
+                {isSaving ? "Adding..." : "Add voter"}
               </button>
             </div>
-          </div>
-        </details>
+            <details className="editorial-disclosure">
+              <summary>Paste list in bulk</summary>
+              <div className="editorial-disclosure-body">
+                <textarea
+                  value={bulkInput}
+                  onChange={(event) => setBulkInput(event.currentTarget.value)}
+                  placeholder={"michae2xl,username.42\nalice,alice_user.99"}
+                />
+                <div className="editorial-inline-actions">
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    disabled={isSaving || !parsedBulk.length}
+                    onClick={() => void createVoters(parsedBulk)}
+                  >
+                    {isSaving ? "Adding..." : "Add pasted voters"}
+                  </button>
+                </div>
+              </div>
+            </details>
+          </>
+        )}
         {notice ? <p className="muted-text">{notice}</p> : null}
         {error ? <p className="error-notice">{error}</p> : null}
       </section>
@@ -171,7 +182,7 @@ export function AdminVotersManager({
                   </span>
                 </td>
                 <td className="editorial-table-actions">
-                  {row.canRemove ? (
+                  {row.canRemove && !rosterLocked ? (
                     <button
                       type="button"
                       className="secondary-button editorial-inline-button"

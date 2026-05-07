@@ -1,4 +1,9 @@
-import { PollStatus } from "@prisma/client";
+import {
+  DaoMembershipActionType,
+  DaoMemberStatus,
+  PollAudience,
+  PollStatus
+} from "@prisma/client";
 import { z } from "zod";
 import { buildAnchorMemo, normalizeQuestion, questionHash } from "@/lib/domain/polls";
 import { generateInviteToken } from "@/lib/domain/invites";
@@ -13,6 +18,7 @@ import {
 } from "@/lib/domain/governance";
 import { MIN_POLL_WINDOW_HOURS, MIN_POLL_WINDOW_MS } from "@/lib/domain/poll-window";
 import { recordPollCreatedAuditEvent } from "@/lib/services/public-audit-events";
+import { readActiveDaoMemberVoters } from "@/lib/services/dao-members";
 
 export class PollServiceError extends Error {
   constructor(
@@ -31,6 +37,18 @@ export const pollVoterInputSchema = z.object({
   signalUsername: signalUsernameSchema
 });
 
+const membershipActionInputSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("ADD_MEMBER"),
+    nick: z.string().trim().min(1),
+    signalUsername: signalUsernameSchema
+  }),
+  z.object({
+    type: z.literal("REMOVE_MEMBER"),
+    targetMemberId: z.string().min(1)
+  })
+]);
+
 export const createDraftPollInputSchema = z
   .object({
     question: z.string().min(12),
@@ -41,7 +59,9 @@ export const createDraftPollInputSchema = z
     optionCLabel: z.string().optional().default(""),
     optionDLabel: z.string().optional().default(""),
     optionELabel: z.string().optional().default(""),
-    voters: z.array(pollVoterInputSchema).min(1)
+    audience: z.nativeEnum(PollAudience).default(PollAudience.CUSTOM),
+    voters: z.array(pollVoterInputSchema).default([]),
+    membershipAction: membershipActionInputSchema.optional()
   })
   .superRefine((value, ctx) => {
     const opensAtMs = new Date(value.opensAt).getTime();
@@ -58,6 +78,22 @@ export const createDraftPollInputSchema = z
         code: z.ZodIssueCode.custom,
         path: ["closesAt"],
         message: `Poll window must be at least ${MIN_POLL_WINDOW_HOURS} hours for global voters`
+      });
+    }
+
+    if (value.audience === PollAudience.CUSTOM && value.voters.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["voters"],
+        message: "Add at least one voter or use the DAO member basket"
+      });
+    }
+
+    if (value.membershipAction && value.audience !== PollAudience.DAO_MEMBERS) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["membershipAction"],
+        message: "membership proposals must use the DAO member basket"
       });
     }
 
@@ -121,6 +157,83 @@ export async function createDraftPoll(
   createdById: string
 ) {
   const parsed = createDraftPollInputSchema.parse(input);
+  let voters = parsed.voters;
+  let membershipActionCreate:
+    | {
+        type: DaoMembershipActionType;
+        nick: string;
+        signalUsername: string;
+        targetMemberId?: string;
+      }
+    | undefined;
+
+  if (parsed.audience === PollAudience.DAO_MEMBERS) {
+    voters = await readActiveDaoMemberVoters();
+
+    if (voters.length === 0) {
+      throw new PollServiceError(
+        "DAO member basket is empty",
+        409,
+        "DAO_MEMBER_BASKET_EMPTY"
+      );
+    }
+  }
+
+  if (parsed.membershipAction?.type === "ADD_MEMBER") {
+    const existingActiveMember = await db.daoMember.findFirst({
+      where: {
+        status: DaoMemberStatus.ACTIVE,
+        OR: [
+          { nick: parsed.membershipAction.nick },
+          { signalUsername: parsed.membershipAction.signalUsername }
+        ]
+      },
+      select: {
+        id: true
+      }
+    });
+
+    if (existingActiveMember) {
+      throw new PollServiceError(
+        "DAO member is already active",
+        409,
+        "DAO_MEMBER_ALREADY_ACTIVE"
+      );
+    }
+
+    membershipActionCreate = {
+      type: DaoMembershipActionType.ADD_MEMBER,
+      nick: parsed.membershipAction.nick,
+      signalUsername: parsed.membershipAction.signalUsername
+    };
+  } else if (parsed.membershipAction?.type === "REMOVE_MEMBER") {
+    const targetMember = await db.daoMember.findFirst({
+      where: {
+        id: parsed.membershipAction.targetMemberId,
+        status: DaoMemberStatus.ACTIVE
+      },
+      select: {
+        id: true,
+        nick: true,
+        signalUsername: true
+      }
+    });
+
+    if (!targetMember) {
+      throw new PollServiceError(
+        "DAO member not found",
+        404,
+        "DAO_MEMBER_NOT_FOUND"
+      );
+    }
+
+    membershipActionCreate = {
+      type: DaoMembershipActionType.REMOVE_MEMBER,
+      nick: targetMember.nick,
+      signalUsername: targetMember.signalUsername,
+      targetMemberId: targetMember.id
+    };
+  }
 
   return db.poll.create({
     data: {
@@ -133,19 +246,25 @@ export async function createDraftPoll(
       voteModel: DEFAULT_VOTE_MODEL,
       quorumPercent: DEFAULT_QUORUM_PERCENT,
       passingThresholdPercent: DEFAULT_PASSING_THRESHOLD_PERCENT,
+      audience: parsed.audience,
       questionHash: parsed.questionHash,
       feeZat: getDefaultPollFeeZat(),
       opensAt: new Date(parsed.opensAt),
       closesAt: new Date(parsed.closesAt),
       createdById,
       voterAccesses: {
-        create: parsed.voters.map((voter) => ({
+        create: voters.map((voter) => ({
           nick: voter.nick,
           signalUsername: voter.signalUsername,
           inviteToken: generateInviteToken(),
           expiresAt: new Date(parsed.closesAt)
         }))
       },
+      membershipAction: membershipActionCreate
+        ? {
+            create: membershipActionCreate
+          }
+        : undefined,
       tally: {
         create: {}
       }

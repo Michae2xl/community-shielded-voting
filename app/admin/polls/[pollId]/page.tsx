@@ -158,9 +158,18 @@ export default async function AdminPollPage({
       voteModel: true,
       quorumPercent: true,
       passingThresholdPercent: true,
+      audience: true,
       opensAt: true,
       closesAt: true,
       anchorTxid: true,
+      membershipAction: {
+        select: {
+          type: true,
+          status: true,
+          nick: true,
+          signalUsername: true
+        }
+      },
       invites: {
         select: {
           status: true,
@@ -281,6 +290,7 @@ export default async function AdminPollPage({
   );
   const hasSentInvites = sentInviteCount > 0 || openedInviteCount > 0;
   const voterRows = buildAdminVoterRows(poll.voterAccesses, { resultsVisible });
+  const rosterLocked = poll.audience === "DAO_MEMBERS";
 
   return (
     <main className="page-shell">
@@ -309,9 +319,9 @@ export default async function AdminPollPage({
             </div>
           </div>
           <p className="editorial-copy editorial-copy--wide">
-            Review the poll, keep the voter list editable, resend delivery by
-            selection, and treat results in two layers: reconciled result first,
-            collector observation second.
+            Review the poll, resend Signal delivery by selection, and treat results
+            in two layers: reconciled result first, collector observation second.
+            DAO member rosters are governed by poll, not direct admin edits.
           </p>
           <div className="editorial-card-grid">
             <article className="editorial-note-card">
@@ -340,6 +350,17 @@ export default async function AdminPollPage({
                 {governanceOutcome.passingThresholdPercent}%
               </strong>
               <p>Single-choice result: A over all valid votes.</p>
+            </article>
+            <article className="editorial-note-card">
+              <span className="section-label">Audience</span>
+              <strong>{rosterLocked ? "Zechub DAO members" : "Custom roster"}</strong>
+              <p>
+                {poll.membershipAction
+                  ? `${poll.membershipAction.type === "ADD_MEMBER" ? "Add" : "Remove"} ${poll.membershipAction.nick} if passed.`
+                  : rosterLocked
+                    ? "Active Signal basket copied at creation time."
+                    : "Manual rows are editable until invite or ticket issuance."}
+              </p>
             </article>
           </div>
           <div className="editorial-tab-row" role="tablist" aria-label="Poll dashboard tabs">
@@ -466,8 +487,9 @@ export default async function AdminPollPage({
               </div>
             </div>
             <p className="editorial-copy editorial-copy--wide">
-              Add voters one by one or in bulk. Rows that were never invited can be
-              removed. Once an invite exists, the row stays for audit and access.
+              {rosterLocked
+                ? "This poll uses the fixed Zechub DAO member basket. The list is visible for operations, but changes require a passed membership poll."
+                : "Add voters one by one or in bulk. Rows that were never invited can be removed. Once an invite exists, the row stays for audit and access."}
             </p>
             {!resultsVisible ? (
               <p className="muted-text">
@@ -475,7 +497,11 @@ export default async function AdminPollPage({
                 hidden here until this poll is closed or finalized.
               </p>
             ) : null}
-            <AdminVotersManager pollId={poll.id} rows={voterRows} />
+            <AdminVotersManager
+              pollId={poll.id}
+              rows={voterRows}
+              rosterLocked={rosterLocked}
+            />
           </section>
         ) : null}
 

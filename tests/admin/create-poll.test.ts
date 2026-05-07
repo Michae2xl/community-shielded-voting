@@ -1,12 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { questionHash } from "@/lib/domain/polls";
 
-const { pollCreateMock } = vi.hoisted(() => ({
-  pollCreateMock: vi.fn()
+const { daoMemberFindFirstMock, daoMemberFindManyMock, pollCreateMock } =
+  vi.hoisted(() => ({
+    daoMemberFindFirstMock: vi.fn(),
+    daoMemberFindManyMock: vi.fn(),
+    pollCreateMock: vi.fn()
 }));
 
 vi.mock("@/lib/db", () => ({
   db: {
+    daoMember: {
+      findFirst: daoMemberFindFirstMock,
+      findMany: daoMemberFindManyMock
+    },
     poll: {
       create: pollCreateMock
     }
@@ -19,6 +26,8 @@ import {
 } from "@/lib/services/polls";
 
 beforeEach(() => {
+  daoMemberFindFirstMock.mockReset();
+  daoMemberFindManyMock.mockReset();
   pollCreateMock.mockReset();
 });
 
@@ -146,5 +155,79 @@ describe("createDraftPoll", () => {
         voters: [{ nick: "michae2xl", signalUsername: "michae2xl.42" }]
       })
     ).toThrowError(/single-choice/i);
+  });
+
+  it("uses the active DAO member basket for DAO member polls", async () => {
+    daoMemberFindManyMock.mockResolvedValue([
+      { nick: "michae2xl", signalUsername: "michae2xl.42" }
+    ]);
+    pollCreateMock.mockResolvedValue({ id: "poll_1" });
+
+    await createDraftPoll(
+      {
+        question: "Should the next shielded rollout proceed on mainnet?",
+        opensAt: "2026-04-21T12:00:00.000Z",
+        closesAt: "2026-04-22T12:00:00.000Z",
+        optionALabel: "Approve",
+        optionBLabel: "Reject",
+        audience: "DAO_MEMBERS"
+      },
+      "admin_1"
+    );
+
+    expect(pollCreateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          audience: "DAO_MEMBERS",
+          voterAccesses: {
+            create: [
+              expect.objectContaining({
+                nick: "michae2xl",
+                signalUsername: "michae2xl.42"
+              })
+            ]
+          }
+        })
+      })
+    );
+  });
+
+  it("stores membership actions on DAO member poll drafts", async () => {
+    daoMemberFindManyMock.mockResolvedValue([
+      { nick: "michae2xl", signalUsername: "michae2xl.42" }
+    ]);
+    daoMemberFindFirstMock.mockResolvedValue(null);
+    pollCreateMock.mockResolvedValue({ id: "poll_1" });
+
+    await createDraftPoll(
+      {
+        question: "Should alice join the Zechub DAO voter basket?",
+        opensAt: "2026-04-21T12:00:00.000Z",
+        closesAt: "2026-04-22T12:00:00.000Z",
+        optionALabel: "Approve",
+        optionBLabel: "Reject",
+        audience: "DAO_MEMBERS",
+        membershipAction: {
+          type: "ADD_MEMBER",
+          nick: "alice",
+          signalUsername: "alice_user.99"
+        }
+      },
+      "admin_1"
+    );
+
+    expect(pollCreateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          membershipAction: {
+            create: {
+              type: "ADD_MEMBER",
+              nick: "alice",
+              signalUsername: "alice_user.99"
+            }
+          }
+        })
+      })
+    );
   });
 });
