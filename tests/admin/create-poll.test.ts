@@ -31,7 +31,7 @@ describe("createDraftPollInputSchema", () => {
         optionALabel: "Approve",
         optionBLabel: "Reject",
         optionCLabel: "Abstain",
-        voters: [{ nick: "michae2xl", email: "michaelguima@proton.me" }]
+        voters: [{ nick: "michae2xl", signalUsername: "michae2xl.42" }]
       });
 
     expect(parsed.questionHash).toBe(
@@ -47,7 +47,7 @@ describe("createDraftPollInputSchema", () => {
         closesAt: "2026-05-01T10:00:00.000Z",
         optionALabel: "Approve",
         optionBLabel: "Reject",
-        voters: [{ nick: "michae2xl", email: "michaelguima@proton.me" }]
+        voters: [{ nick: "michae2xl", signalUsername: "michae2xl.42" }]
       })
     ).toThrowError(/closesAt must be after opensAt/i);
   });
@@ -60,7 +60,7 @@ describe("createDraftPollInputSchema", () => {
         closesAt: "2026-05-01T12:00:00.000Z",
         optionALabel: "Approve",
         optionBLabel: "Reject",
-        voters: [{ nick: "michae2xl", email: "michaelguima@proton.me" }]
+        voters: [{ nick: "michae2xl", signalUsername: "michae2xl.42" }]
       })
     ).toThrowError(/at least 24 hours/i);
   });
@@ -80,7 +80,7 @@ describe("createDraftPoll", () => {
         optionCLabel: "",
         optionDLabel: "",
         optionELabel: "",
-        voters: [{ nick: "michae2xl", email: "michaelguima@proton.me" }]
+        voters: [{ nick: "michae2xl", signalUsername: "michae2xl.42" }]
       },
       "admin_1"
     );
@@ -101,7 +101,7 @@ describe("createDraftPoll", () => {
             create: [
               expect.objectContaining({
                 nick: "michae2xl",
-                email: "michaelguima@proton.me",
+                signalUsername: "michae2xl.42",
                 inviteToken: expect.any(String),
                 expiresAt: new Date("2026-04-22T12:00:00.000Z")
               })
@@ -122,8 +122,8 @@ describe("createDraftPoll", () => {
           optionALabel: "Approve",
           optionBLabel: "Reject",
           voters: [
-            { nick: "michae2xl", email: "michaelguima@proton.me" },
-            { nick: "michae2xl", email: "other@example.com" }
+            { nick: "michae2xl", signalUsername: "michae2xl.42" },
+            { nick: "michae2xl", signalUsername: "other_user.99" }
           ]
         },
         "admin_1"
@@ -143,7 +143,7 @@ describe("createDraftPoll", () => {
         optionBLabel: "Reject",
         optionCLabel: "Abstain",
         optionDLabel: "Maybe",
-        voters: [{ nick: "michae2xl", email: "michaelguima@proton.me" }]
+        voters: [{ nick: "michae2xl", signalUsername: "michae2xl.42" }]
       })
     ).toThrowError(/single-choice/i);
   });

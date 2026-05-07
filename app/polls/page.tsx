@@ -127,6 +127,12 @@ export default async function PollsPage() {
             ) : null}
             <span className="meta-chip">Reconciled</span>
             <span className="meta-chip">Read only</span>
+            <Link href="/rss.xml" className="meta-chip">
+              RSS
+            </Link>
+            <Link href="/atom.xml" className="meta-chip">
+              Atom
+            </Link>
             <span className="meta-chip meta-chip--mint">{openCount} OPEN</span>
             <span className="meta-chip">{closedCount} CLOSED</span>
           </div>

@@ -6,7 +6,7 @@ This file is adapted to the current `Sprint Proposal` issue template in `ZcashAp
 
 **Pitch**
 
-`community-shielded-voting` is a live reference implementation of invite-based shielded voting on Zcash for community pilots. It already supports poll creation, staged `Open poll` execution, temporary voter credentials, single locked QR voting via ZIP-321, duplicate protection, public reconciled results, and one-block receipt delivery. This matters because it turns Zcash shielded transfers into a working voting product that real communities can run now, while also creating a concrete base for future privacy upgrades such as stronger operator separation and membership-proof voting.
+`community-shielded-voting` is a live reference implementation of invite-based shielded voting on Zcash for community pilots. It already supports poll creation, staged `Open poll` execution, Signal-username invite delivery, one-time poll links, single locked QR voting via ZIP-321, duplicate protection, public reconciled results, and one-block receipt delivery. This matters because it turns Zcash shielded transfers into a working voting product that real communities can run now, while also creating a concrete base for future privacy upgrades such as stronger operator separation and membership-proof voting.
 
 **Who is leading it?**
 
@@ -35,8 +35,8 @@ Keep running community pilots, publish the repo and writeup as a reusable refere
 - Current flow already includes:
   - admin review-first poll creation
   - staged `Open poll`
-  - invite email delivery
-  - poll-scoped login
+  - Signal-username invite delivery
+  - one-time poll links that create the poll-scoped session
   - choice lock before QR generation
   - one QR per ticket
   - fast note detection
@@ -68,7 +68,7 @@ If you want a tighter issue body, use this:
 
 **Pitch**
 
-`community-shielded-voting` is a live invite-based shielded voting system on Zcash for community pilots. It already supports admin poll creation and opening, temporary voter credentials, single locked QR voting via ZIP-321, duplicate protection, reconciled public results, and one-block receipt delivery. The sprint would package, document, and harden it as a reusable Lab reference implementation for private community voting on Zcash.
+`community-shielded-voting` is a live invite-based shielded voting system on Zcash for community pilots. It already supports admin poll creation and opening, Signal-username invite delivery, one-time poll links, single locked QR voting via ZIP-321, duplicate protection, reconciled public results, and one-block receipt delivery. The sprint would package, document, and harden it as a reusable Lab reference implementation for private community voting on Zcash.
 
 **Who is leading it?**
 

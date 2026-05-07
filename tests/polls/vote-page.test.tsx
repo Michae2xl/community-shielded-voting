@@ -28,12 +28,12 @@ describe("PollVotePage", () => {
     );
   }
 
-  it("mentions invited voter credentials on the login screen", async () => {
+  it("tells voters to use their one-time invite link on the login screen", async () => {
     render(await LoginPage({ searchParams: Promise.resolve({}) }));
 
     expect(
       screen.getByText(
-        /Use your admin credentials or the temporary voter credentials from your invite email to enter the portal/i
+        /Voters should open their one-time invite link instead of typing a password/i
       )
     ).toBeInTheDocument();
   });

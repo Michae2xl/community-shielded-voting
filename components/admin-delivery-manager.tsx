@@ -6,7 +6,7 @@ import { useMemo, useState } from "react";
 type DeliveryRow = {
   id: string;
   nick: string;
-  email: string;
+  deliveryTarget: string;
   inviteStatus: string;
   statusTone: "neutral" | "success" | "warning";
   canSelect: boolean;
@@ -45,7 +45,7 @@ export function AdminDeliveryManager({
       body: JSON.stringify({ pollVoterAccessIds: selectedIds })
     });
     const json = (await response.json().catch(() => null)) as
-      | { sent?: number; failed?: number; skippedMissingEmail?: number; error?: string }
+      | { sent?: number; failed?: number; skippedMissingDelivery?: number; error?: string }
       | null;
 
     if (!response.ok) {
@@ -55,7 +55,7 @@ export function AdminDeliveryManager({
     }
 
     setNotice(
-      `Sent ${json?.sent ?? 0}, failed ${json?.failed ?? 0}, missing email ${json?.skippedMissingEmail ?? 0}.`
+      `Sent ${json?.sent ?? 0}, failed ${json?.failed ?? 0}, missing delivery ${json?.skippedMissingDelivery ?? 0}.`
     );
     setSelectedIds([]);
     setIsSending(false);
@@ -93,7 +93,7 @@ export function AdminDeliveryManager({
             <tr>
               <th className="editorial-table-check">Select</th>
               <th>Nick</th>
-              <th>Email</th>
+              <th>Delivery ID</th>
               <th>Invite status</th>
             </tr>
           </thead>
@@ -113,7 +113,7 @@ export function AdminDeliveryManager({
                   )}
                 </td>
                 <td>{row.nick}</td>
-                <td>{row.email}</td>
+                <td>{row.deliveryTarget}</td>
                 <td>
                   <span className={`status-pill status-pill--${row.statusTone}`}>
                     {row.inviteStatus}

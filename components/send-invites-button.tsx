@@ -7,7 +7,7 @@ type InviteSendResult = {
   totalEligible: number;
   sent: number;
   failed: number;
-  skippedMissingEmail: number;
+  skippedMissingDelivery: number;
 };
 
 export function SendInvitesButton({
@@ -39,7 +39,7 @@ export function SendInvitesButton({
     }
 
     setNotice(
-      `Sent ${json?.sent ?? 0}, failed ${json?.failed ?? 0}, missing email ${json?.skippedMissingEmail ?? 0}.`
+      `Sent ${json?.sent ?? 0}, failed ${json?.failed ?? 0}, missing delivery ${json?.skippedMissingDelivery ?? 0}.`
     );
     startTransition(() => {
       router.refresh();

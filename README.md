@@ -5,10 +5,11 @@ Reference implementation of invite-based shielded voting on Zcash.
 This project packages a working community voting system with:
 - admin poll creation and review
 - guided `Open poll` flow with visible stages
-- temporary poll-scoped voter credentials
+- Signal-username voter delivery with one-time poll links
 - single locked QR voting via ZIP-321
 - one-block vote receipt delivery
 - public reconciled poll board
+- public RSS/Atom notifications for poll opened, poll closed, and result published
 - duplicate protection in the vote tally
 
 It is designed as a **community pilot rail** and **reference implementation**, not as a final trustless voting primitive.
@@ -34,8 +35,8 @@ It is designed as a **community pilot rail** and **reference implementation**, n
   - `Open poll`
 
 ### Voter
-- Receive an invite email with poll-scoped credentials
-- Sign in to the poll
+- Receive a Signal invite with the poll title and a one-time poll link
+- Open the one-time link to create the poll-scoped session
 - Choose one option before any QR is shown
 - Confirm the choice and receive one locked QR only
 - Pay through a shielded wallet flow
@@ -55,7 +56,8 @@ flowchart LR
   B --> D["zallet RPC / collector"]
   D --> E["Zcash shielded network"]
   F["Voter wallet"] --> E
-  B --> G["Resend"]
+  B --> G["Signal REST API"]
+  B --> H["Resend fallback"]
 ```
 
 ## End-to-End Voting Flow
@@ -69,6 +71,7 @@ sequenceDiagram
   participant Zcash
   participant Voter
   participant Wallet
+  participant Signal
   participant Resend
 
   Admin->>App: Create poll
@@ -84,10 +87,10 @@ sequenceDiagram
   App->>Zallet: z_getaddressforaccount x N
   Zallet-->>App: Unique shielded addresses
   App->>DB: Create tickets and vote requests
-  App->>Resend: Send invite email
-  Resend-->>Voter: Invite + login + poll link
+  App->>Signal: Send invite link to Signal username
+  Signal-->>Voter: Poll title + one-time poll link
 
-  Voter->>App: Login + choose one option
+  Voter->>App: Open poll session + choose one option
   App->>DB: Ticket = LOCKED
   App-->>Voter: One ZIP-321 QR only
 
@@ -168,7 +171,9 @@ npm run dev
 - `ZCAP_SESSION_SECRET` for browser session signing
 - `ZCAP_INTERNAL_SECRET` for internal collector routes
 - `ZALLET_*` and `POLL_COLLECTOR_ACCOUNT_UUID` for the collector wallet
-- `RESEND_API_KEY` and `RESEND_FROM_EMAIL` for invite and receipt delivery
+- `SIGNAL_API_URL` and `SIGNAL_SENDER` for primary Signal invite delivery
+- optional `SIGNAL_API_TOKEN` if the private Signal REST API is behind an internal gateway
+- `RESEND_API_KEY` and `RESEND_FROM_EMAIL` for legacy email fallback and receipt delivery
 
 See `.env.example` for the base local shape.
 

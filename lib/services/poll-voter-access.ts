@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
 import { db } from "@/lib/db";
 import { generateInviteToken } from "@/lib/domain/invites";
+import { normalizeSignalUsername } from "@/lib/domain/signal";
 
 const PASSWORD_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const PASSWORD_GROUP_SIZE = 4;
@@ -52,7 +53,7 @@ export async function issueTemporaryPollPassword(input: {
 
 export async function createPollVoterAccesses(input: {
   pollId: string;
-  voters: Array<{ nick: string; email: string }>;
+  voters: Array<{ nick: string; signalUsername: string }>;
 }) {
   const poll = await db.poll.findUnique({
     where: { id: input.pollId },
@@ -73,19 +74,22 @@ export async function createPollVoterAccesses(input: {
   const created = [];
 
   for (const voter of input.voters) {
+    const signalUsername = normalizeSignalUsername(voter.signalUsername);
+
     try {
       const access = await db.pollVoterAccess.create({
         data: {
           pollId: poll.id,
           nick: voter.nick,
-          email: voter.email,
+          signalUsername,
           inviteToken: generateInviteToken(),
           expiresAt: poll.closesAt
         },
         select: {
           id: true,
           nick: true,
-          email: true
+          email: true,
+          signalUsername: true
         }
       });
 
@@ -103,7 +107,7 @@ export async function createPollVoterAccesses(input: {
           "DUPLICATE_VOTER",
           {
             nick: voter.nick,
-            email: voter.email
+            signalUsername
           }
         );
       }

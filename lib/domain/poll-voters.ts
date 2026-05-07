@@ -1,10 +1,8 @@
-import { z } from "zod";
-
-const emailSchema = z.string().email();
+import { normalizeSignalUsername } from "@/lib/domain/signal";
 
 export type PollVoterInput = {
   nick: string;
-  email: string;
+  signalUsername: string;
 };
 
 export class PollVoterParseError extends Error {
@@ -16,33 +14,37 @@ export class PollVoterParseError extends Error {
 
 export function parsePollVoterLines(input: string): PollVoterInput[] {
   const seenNicks = new Set<string>();
-  const seenEmails = new Set<string>();
+  const seenSignalUsernames = new Set<string>();
 
   return input
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean)
     .map((line) => {
-      const [nickRaw, emailRaw, ...extra] = line.split(",").map((value) => value.trim());
+      const [nickRaw, signalUsernameRaw, ...extra] = line
+        .split(",")
+        .map((value) => value.trim());
 
-      if (!nickRaw || !emailRaw || extra.length > 0) {
+      if (!nickRaw || !signalUsernameRaw || extra.length > 0) {
         throw new PollVoterParseError(`invalid voter row: ${line}`);
       }
 
       const nick = nickRaw;
-      const email = emailSchema
-        .parse(emailRaw, {
-          errorMap: () => ({ message: `invalid voter row: ${line}` })
-        })
-        .toLowerCase();
+      let signalUsername = "";
 
-      if (seenNicks.has(nick) || seenEmails.has(email)) {
+      try {
+        signalUsername = normalizeSignalUsername(signalUsernameRaw);
+      } catch {
+        throw new PollVoterParseError(`invalid voter row: ${line}`);
+      }
+
+      if (seenNicks.has(nick) || seenSignalUsernames.has(signalUsername)) {
         throw new PollVoterParseError(`duplicate voter: ${line}`);
       }
 
       seenNicks.add(nick);
-      seenEmails.add(email);
+      seenSignalUsernames.add(signalUsername);
 
-      return { nick, email };
+      return { nick, signalUsername };
     });
 }

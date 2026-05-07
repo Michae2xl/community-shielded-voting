@@ -3,7 +3,7 @@
 ## Now: community pilot rail
 
 - invite-based shielded voting for real communities
-- temporary voter credentials scoped to a poll
+- one-time invite links scoped to a poll, delivered primarily by Signal username
 - single locked QR voting flow
 - one-block confirmed receipt delivery
 - public reconciled tally with duplicate protection

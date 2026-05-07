@@ -340,9 +340,9 @@ export default function PollVotePageClient({
     state.kind === "loading"
       ? `Loading access for ${pollId} and preparing your shielded voting session.`
       : state.kind === "access_error"
-      ? "We could not verify your access to this poll. Reopen the invite email or sign in again."
+      ? "We could not verify your access to this poll. Reopen your invite link or sign in again."
       : state.kind === "not_found"
-      ? "This browser session is not linked to this poll. Reopen the exact invite email or sign out before trying again."
+      ? "This browser session is not linked to this poll. Reopen the exact invite link or sign out before trying again."
       : state.kind === "choose"
       ? `${poll?.status ?? "OPEN"} · choose one option before generating the QR code`
       : state.kind === "locked"
@@ -372,7 +372,7 @@ export default function PollVotePageClient({
     state.kind === "loading"
       ? "Fetching your ticket state and ballot options..."
       : state.kind === "access_error"
-      ? "Your session expired or this invite is no longer active. Reopen the invite email or sign in again."
+      ? "Your session expired or this invite is no longer active. Reopen your invite link or sign in again."
       : state.kind === "not_found"
       ? "This usually means the browser is signed in with a different voter session than the invite. Sign out, then reopen the original invite link for this poll."
       : state.kind === "not_open"

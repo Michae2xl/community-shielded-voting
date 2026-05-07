@@ -5,7 +5,8 @@
 - Next.js app service
 - PostgreSQL database
 - `zallet` collector reachable from the app
-- Resend account for invite and receipt email
+- private `signal-cli-rest-api` reachable only over Tailscale or an internal network
+- Resend account for legacy invite fallback and receipt email
 
 ## Minimum environment
 
@@ -19,6 +20,9 @@ ZALLET_FROM_ADDRESS=
 ZALLET_RPC_USER=
 ZALLET_RPC_PASSWORD=
 POLL_COLLECTOR_ACCOUNT_UUID=
+SIGNAL_API_URL=
+SIGNAL_SENDER=
+SIGNAL_API_TOKEN=
 RESEND_API_KEY=
 RESEND_FROM_EMAIL=
 APP_BASE_URL=
@@ -30,6 +34,7 @@ APP_BASE_URL=
 - do not auto-run `db:seed` on every deploy
 - create the initial admin explicitly with `SEED_ADMIN_PASSWORD`
 - keep the collector credentials outside the public repo
+- keep the Signal REST API private; do not expose it on the public internet
 
 ## Production reminder
 
@@ -37,5 +42,6 @@ This public repository must never include:
 - local `.env` files
 - Railway credentials
 - collector RPC secrets
+- Signal REST API URLs or gateway tokens
 - email service secrets
 - real production user data

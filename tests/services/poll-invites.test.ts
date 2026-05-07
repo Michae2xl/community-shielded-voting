@@ -5,13 +5,13 @@ const {
   upsertInviteMock,
   updateInviteMock,
   sendPollInviteEmailMock,
-  issueTemporaryPollPasswordMock
+  sendSignalMessageMock
 } = vi.hoisted(() => ({
   findUniquePollMock: vi.fn(),
   upsertInviteMock: vi.fn(),
   updateInviteMock: vi.fn(),
   sendPollInviteEmailMock: vi.fn(),
-  issueTemporaryPollPasswordMock: vi.fn()
+  sendSignalMessageMock: vi.fn()
 }));
 
 vi.mock("@/lib/db", () => ({
@@ -31,8 +31,9 @@ vi.mock("@/lib/email/resend", () => ({
   sendPollInviteEmail: sendPollInviteEmailMock
 }));
 
-vi.mock("@/lib/services/poll-voter-access", () => ({
-  issueTemporaryPollPassword: issueTemporaryPollPasswordMock
+vi.mock("@/lib/signal/client", () => ({
+  isSignalDeliveryConfigured: vi.fn(),
+  sendSignalMessage: sendSignalMessageMock
 }));
 
 import {
@@ -40,19 +41,23 @@ import {
   sendPollInvites
 } from "@/lib/services/poll-invites";
 import { isEmailDeliveryConfigured } from "@/lib/email/resend";
+import { isSignalDeliveryConfigured } from "@/lib/signal/client";
 
 beforeEach(() => {
   findUniquePollMock.mockReset();
   upsertInviteMock.mockReset();
   updateInviteMock.mockReset();
   sendPollInviteEmailMock.mockReset();
-  issueTemporaryPollPasswordMock.mockReset();
+  sendSignalMessageMock.mockReset();
   vi.mocked(isEmailDeliveryConfigured).mockReset();
+  vi.mocked(isSignalDeliveryConfigured).mockReset();
+  vi.mocked(isSignalDeliveryConfigured).mockReturnValue(false);
 });
 
 describe("sendPollInvites", () => {
-  it("throws when email delivery is not configured", async () => {
+  it("throws when no invite delivery channel is configured", async () => {
     vi.mocked(isEmailDeliveryConfigured).mockReturnValue(false);
+    vi.mocked(isSignalDeliveryConfigured).mockReturnValue(false);
 
     await expect(
       sendPollInvites({
@@ -60,7 +65,7 @@ describe("sendPollInvites", () => {
         baseUrl: "https://vote.example.com"
       })
     ).rejects.toMatchObject({
-      code: "EMAIL_NOT_CONFIGURED",
+      code: "DELIVERY_NOT_CONFIGURED",
       status: 503
     } satisfies Partial<InviteServiceError>);
   });
@@ -114,6 +119,7 @@ describe("sendPollInvites", () => {
       totalEligible: 2,
       sent: 1,
       failed: 0,
+      skippedMissingDelivery: 1,
       skippedMissingEmail: 1
     });
     expect(upsertInviteMock).toHaveBeenCalledWith({
@@ -123,13 +129,15 @@ describe("sendPollInvites", () => {
           userId: "user_1"
         }
       },
-      update: {
-        email: "alice@example.com"
-      },
+      update: expect.objectContaining({
+        email: "alice@example.com",
+        deliveryChannel: "EMAIL"
+      }),
       create: expect.objectContaining({
         pollId: "poll_1",
         userId: "user_1",
-        email: "alice@example.com"
+        email: "alice@example.com",
+        deliveryChannel: "EMAIL"
       })
     });
     expect(sendPollInviteEmailMock).toHaveBeenCalledWith({
@@ -148,6 +156,8 @@ describe("sendPollInvites", () => {
       where: { id: "invite_1" },
       data: expect.objectContaining({
         resendEmailId: "email_1",
+        signalMessageId: null,
+        deliveryChannel: "EMAIL",
         status: "SENT",
         lastError: null
       })
@@ -193,6 +203,7 @@ describe("sendPollInvites", () => {
       totalEligible: 1,
       sent: 0,
       failed: 1,
+      skippedMissingDelivery: 0,
       skippedMissingEmail: 0
     });
     expect(updateInviteMock).toHaveBeenCalledWith({
@@ -204,8 +215,9 @@ describe("sendPollInvites", () => {
     });
   });
 
-  it("sends invite emails with temporary credentials for poll voter access", async () => {
-    vi.mocked(isEmailDeliveryConfigured).mockReturnValue(true);
+  it("sends Signal invite links without temporary passwords for poll voter access", async () => {
+    vi.mocked(isEmailDeliveryConfigured).mockReturnValue(false);
+    vi.mocked(isSignalDeliveryConfigured).mockReturnValue(true);
     findUniquePollMock.mockResolvedValue({
       id: "poll_1",
       question: "Which governance path should be activated next?",
@@ -216,7 +228,8 @@ describe("sendPollInvites", () => {
         {
           id: "access_1",
           nick: "michae2xl",
-          email: "michaelguima@proton.me",
+          email: null,
+          signalUsername: "michae2xl.42",
           inviteToken: "token_1"
         }
       ]
@@ -225,16 +238,14 @@ describe("sendPollInvites", () => {
       id: "invite_1",
       pollId: "poll_1",
       pollVoterAccessId: "access_1",
-      email: "michaelguima@proton.me",
+      email: null,
+      signalUsername: "michae2xl.42",
       inviteToken: "token_1",
       openedAt: null,
       status: "PENDING"
     });
-    issueTemporaryPollPasswordMock.mockResolvedValue({
-      plaintextPassword: "TEMP-PASS-01"
-    });
-    sendPollInviteEmailMock.mockResolvedValue({
-      id: "email_1"
+    sendSignalMessageMock.mockResolvedValue({
+      id: "signal_1"
     });
 
     const result = await sendPollInvites({
@@ -245,11 +256,10 @@ describe("sendPollInvites", () => {
     expect(result).toMatchObject({
       totalEligible: 1,
       sent: 1,
+      sentSignal: 1,
       failed: 0,
+      skippedMissingDelivery: 0,
       skippedMissingEmail: 0
-    });
-    expect(issueTemporaryPollPasswordMock).toHaveBeenCalledWith({
-      pollVoterAccessId: "access_1"
     });
     expect(upsertInviteMock).toHaveBeenCalledWith({
       where: {
@@ -258,33 +268,35 @@ describe("sendPollInvites", () => {
           pollVoterAccessId: "access_1"
         }
       },
-      update: {
-        email: "michaelguima@proton.me"
-      },
+      update: expect.objectContaining({
+        email: null,
+        signalUsername: "michae2xl.42",
+        deliveryChannel: "SIGNAL"
+      }),
       create: expect.objectContaining({
         pollId: "poll_1",
         pollVoterAccessId: "access_1",
-        email: "michaelguima@proton.me",
+        email: null,
+        signalUsername: "michae2xl.42",
+        deliveryChannel: "SIGNAL",
         inviteToken: "token_1"
       })
     });
-    expect(sendPollInviteEmailMock).toHaveBeenCalledWith({
-      to: "michaelguima@proton.me",
-      subject: expect.stringMatching(/which governance path/i),
-      pollQuestion: "Which governance path should be activated next?",
-      voterNick: "michae2xl",
-      loginNick: "michae2xl",
-      temporaryPassword: "TEMP-PASS-01",
-      inviteUrl: "https://vote.example.com/invites/token_1",
-      opensAt: "01 May 2026, 10:00 UTC",
-      closesAt: "03 May 2026, 10:00 UTC",
-      pollId: "poll_1",
-      pollVoterAccessId: "access_1"
+    expect(sendPollInviteEmailMock).not.toHaveBeenCalled();
+    expect(sendSignalMessageMock).toHaveBeenCalledWith({
+      to: "michae2xl.42",
+      message: expect.stringContaining("https://vote.example.com/invites/token_1")
     });
+    expect(sendSignalMessageMock.mock.calls[0][0].message).toContain(
+      "Which governance path should be activated next?"
+    );
+    expect(sendSignalMessageMock.mock.calls[0][0].message).not.toContain("TEMP-PASS");
     expect(updateInviteMock).toHaveBeenCalledWith({
       where: { id: "invite_1" },
       data: expect.objectContaining({
-        resendEmailId: "email_1",
+        resendEmailId: null,
+        signalMessageId: "signal_1",
+        deliveryChannel: "SIGNAL",
         status: "SENT",
         lastError: null
       })

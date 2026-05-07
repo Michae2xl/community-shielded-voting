@@ -60,8 +60,8 @@ describe("NewPollPage", () => {
     fireEvent.change(screen.getByLabelText(/^voter nick 1$/i), {
       target: { value: "michae2xl" }
     });
-    fireEvent.change(screen.getByLabelText(/^voter email 1$/i), {
-      target: { value: "michaelguima@proton.me" }
+    fireEvent.change(screen.getByLabelText(/^voter signal username 1$/i), {
+      target: { value: "michae2xl.42" }
     });
     fireEvent.change(screen.getByLabelText(/^opens at/i), {
       target: { value: "2026-05-01T10:00" }
@@ -96,8 +96,8 @@ describe("NewPollPage", () => {
     fireEvent.change(screen.getByLabelText(/^voter nick 1$/i), {
       target: { value: "michae2xl" }
     });
-    fireEvent.change(screen.getByLabelText(/^voter email 1$/i), {
-      target: { value: "michaelguima@proton.me" }
+    fireEvent.change(screen.getByLabelText(/^voter signal username 1$/i), {
+      target: { value: "michae2xl.42" }
     });
     fireEvent.click(screen.getByRole("button", { name: /add voter/i }));
     fireEvent.change(screen.getByLabelText(/^opens at/i), {
@@ -115,7 +115,7 @@ describe("NewPollPage", () => {
       | RequestInit
       | undefined;
     const body = requestInit?.body as FormData;
-    expect(body.get("voters")).toBe("michae2xl,michaelguima@proton.me");
+    expect(body.get("voters")).toBe("michae2xl,michae2xl.42");
   });
 
   it("blocks submit when a voter row is only partially filled", async () => {
@@ -133,8 +133,8 @@ describe("NewPollPage", () => {
     fireEvent.change(screen.getByLabelText(/^voter nick 1$/i), {
       target: { value: "michae2xl" }
     });
-    fireEvent.change(screen.getByLabelText(/^voter email 1$/i), {
-      target: { value: "michaelguima@proton.me" }
+    fireEvent.change(screen.getByLabelText(/^voter signal username 1$/i), {
+      target: { value: "michae2xl.42" }
     });
     fireEvent.click(screen.getByRole("button", { name: /add voter/i }));
     fireEvent.change(screen.getByLabelText(/^voter nick 2$/i), {
@@ -151,7 +151,7 @@ describe("NewPollPage", () => {
 
     expect(globalThis.fetch).not.toHaveBeenCalled();
     expect(
-      screen.getByText(/complete both nick and email for voter row 2/i)
+      screen.getByText(/complete both user id and signal username for voter row 2/i)
     ).toBeInTheDocument();
   });
 });

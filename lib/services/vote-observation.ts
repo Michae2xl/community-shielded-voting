@@ -5,10 +5,18 @@ export async function hasObservedVoteForAddresses(addresses: string[]) {
     return false;
   }
 
-  const addressSet = new Set(addresses);
-  const notes = await getZkoolClient().fetchIncomingVotes({
-    minConfirmations: 0
-  });
+  try {
+    const addressSet = new Set(addresses);
+    const notes = await getZkoolClient().fetchIncomingVotes({
+      minConfirmations: 0
+    });
 
-  return notes.some((note) => addressSet.has(note.shieldedAddress));
+    return notes.some((note) => addressSet.has(note.shieldedAddress));
+  } catch (error) {
+    console.warn(
+      "Vote observation failed; continuing without observed-vote hint.",
+      error
+    );
+    return false;
+  }
 }

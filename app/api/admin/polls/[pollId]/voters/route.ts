@@ -3,6 +3,7 @@ import { ZodError, z } from "zod";
 import { canManagePolls } from "@/lib/auth/guards";
 import { creatorOwnsPoll } from "@/lib/auth/poll-ownership";
 import { readSession } from "@/lib/auth/session";
+import { signalUsernameSchema } from "@/lib/domain/signal";
 import { rejectIfUntrustedWriteOrigin } from "@/lib/http/write-origin";
 import {
   createPollVoterAccesses,
@@ -11,7 +12,7 @@ import {
 
 const voterSchema = z.object({
   nick: z.string().trim().min(1),
-  email: z.string().trim().email().transform((value) => value.toLowerCase())
+  signalUsername: signalUsernameSchema
 });
 
 const bodySchema = z.object({

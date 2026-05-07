@@ -7,7 +7,6 @@ type PollInviteEmailInput = {
   pollQuestion: string;
   voterNick: string;
   loginNick?: string;
-  temporaryPassword?: string;
   inviteUrl: string;
   opensAt: string;
   closesAt: string;
@@ -171,32 +170,19 @@ function buildEmailShell(input: EmailShellInput) {
 }
 
 function buildInviteHtml(input: PollInviteEmailInput) {
-  const credentialBlock = input.temporaryPassword
-    ? `
-      <div style="margin: 0 0 20px; padding: 18px; border-radius: 20px; background: linear-gradient(180deg, #fff8ec 0%, #f9edd6 100%); border: 1px solid rgba(127, 92, 46, 0.16);">
-        <p style="font-size: 11px; line-height: 1.5; color: #8a693a; text-transform: uppercase; letter-spacing: 0.16em; margin: 0 0 10px; font-weight: 700; font-family: Arial, sans-serif;">Temporary poll access</p>
-        <p style="font-size: 14px; line-height: 1.7; color: #4e3927; margin: 0 0 6px; font-family: Arial, sans-serif;"><strong>Login:</strong> ${escapeHtml(input.loginNick ?? input.voterNick)}</p>
-        <p style="font-size: 14px; line-height: 1.7; color: #4e3927; margin: 0; font-family: Arial, sans-serif;"><strong>Temporary password:</strong> ${escapeHtml(input.temporaryPassword)}</p>
-      </div>
-    `
-    : "";
-  const accessCopy = input.temporaryPassword
-    ? "Use the temporary login above to enter this poll. These credentials are scoped to this invitation."
-    : "You will still sign in with your account before accessing the poll. This link is unique to this poll invitation.";
-
   return buildEmailShell({
     originHint: input.inviteUrl,
     eyebrow: "Invite",
     title: "You are invited to vote",
     intro: `Hello ${input.voterNick}, your shielded poll access is ready.`,
-    detailHtml: credentialBlock,
     infoHtml: `
       ${buildPollQuestionEmailHtml(input.pollQuestion)}
       <p style="margin:0;color:#6b5843;font-size:14px;line-height:1.7;font-family:Arial,sans-serif;"><strong>Voting window:</strong> ${escapeHtml(input.opensAt)} to ${escapeHtml(input.closesAt)}</p>
     `,
     actionLabel: "Open voting portal",
     actionHref: input.inviteUrl,
-    footerNote: accessCopy
+    footerNote:
+      "This unique invite link opens the poll context for this invitation. No voting password is sent by email or Signal."
   });
 }
 
@@ -208,22 +194,11 @@ function buildInviteText(input: PollInviteEmailInput) {
     `Voting window: ${input.opensAt} to ${input.closesAt}`
   ];
 
-  if (input.temporaryPassword) {
-    lines.push(
-      "",
-      "Temporary poll access",
-      `Login: ${input.loginNick ?? input.voterNick}`,
-      `Temporary password: ${input.temporaryPassword}`
-    );
-  }
-
   lines.push(
     "",
     `Open voting portal: ${input.inviteUrl}`,
     "",
-    input.temporaryPassword
-      ? "Use the temporary login above to enter this poll."
-      : "You will still sign in with your account before accessing the poll."
+    "This unique invite link opens the poll context for this invitation. No voting password is sent by email or Signal."
   );
 
   return lines.join("\n");

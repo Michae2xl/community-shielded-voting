@@ -6,7 +6,8 @@ import { useMemo, useState } from "react";
 type VoterRow = {
   id: string;
   nick: string;
-  email: string;
+  signalUsername?: string | null;
+  deliveryTarget: string;
   inviteStatus: string;
   statusTone: "neutral" | "success" | "warning";
   canRemove: boolean;
@@ -18,9 +19,11 @@ function parseBulkVoters(input: string) {
     .map((line) => line.trim())
     .filter(Boolean)
     .map((line) => {
-      const [nick = "", email = ""] = line.split(",").map((value) => value.trim());
+      const [nick = "", signalUsername = ""] = line
+        .split(",")
+        .map((value) => value.trim());
 
-      return { nick, email };
+      return { nick, signalUsername };
     });
 }
 
@@ -33,14 +36,14 @@ export function AdminVotersManager({
 }) {
   const router = useRouter();
   const [nick, setNick] = useState("");
-  const [email, setEmail] = useState("");
+  const [signalUsername, setSignalUsername] = useState("");
   const [bulkInput, setBulkInput] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const parsedBulk = useMemo(() => parseBulkVoters(bulkInput), [bulkInput]);
 
-  async function createVoters(voters: Array<{ nick: string; email: string }>) {
+  async function createVoters(voters: Array<{ nick: string; signalUsername: string }>) {
     if (!voters.length) {
       return;
     }
@@ -67,7 +70,7 @@ export function AdminVotersManager({
     }
 
     setNick("");
-    setEmail("");
+    setSignalUsername("");
     setBulkInput("");
     setNotice(`${json?.created?.length ?? voters.length} voter(s) added.`);
     setIsSaving(false);
@@ -109,17 +112,16 @@ export function AdminVotersManager({
             placeholder="nick"
           />
           <input
-            aria-label="Email"
-            value={email}
-            onChange={(event) => setEmail(event.currentTarget.value)}
-            placeholder="email@example.com"
-            type="email"
+            aria-label="Signal username"
+            value={signalUsername}
+            onChange={(event) => setSignalUsername(event.currentTarget.value)}
+            placeholder="username.42"
           />
           <button
             type="button"
             className="button-link button-link-primary"
-            disabled={isSaving || !nick.trim() || !email.trim()}
-            onClick={() => void createVoters([{ nick, email }])}
+            disabled={isSaving || !nick.trim() || !signalUsername.trim()}
+            onClick={() => void createVoters([{ nick, signalUsername }])}
           >
             {isSaving ? "Adding..." : "Add voter"}
           </button>
@@ -130,7 +132,7 @@ export function AdminVotersManager({
             <textarea
               value={bulkInput}
               onChange={(event) => setBulkInput(event.currentTarget.value)}
-              placeholder={"michae2xl,michaelguima@proton.me\nalice,alice@example.com"}
+              placeholder={"michae2xl,username.42\nalice,alice_user.99"}
             />
             <div className="editorial-inline-actions">
               <button
@@ -153,7 +155,7 @@ export function AdminVotersManager({
           <thead>
             <tr>
               <th>Nick</th>
-              <th>Email</th>
+              <th>Delivery ID</th>
               <th>Invite status</th>
               <th className="editorial-table-actions">Actions</th>
             </tr>
@@ -162,7 +164,7 @@ export function AdminVotersManager({
             {rows.map((row) => (
               <tr key={row.id}>
                 <td>{row.nick}</td>
-                <td>{row.email}</td>
+                <td>{row.deliveryTarget}</td>
                 <td>
                   <span className={`status-pill status-pill--${row.statusTone}`}>
                     {row.inviteStatus}

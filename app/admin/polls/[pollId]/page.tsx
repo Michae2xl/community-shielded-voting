@@ -17,6 +17,7 @@ import {
   calculateSingleChoiceOutcome,
   presentGovernanceOutcome
 } from "@/lib/domain/governance";
+import { isSignalDeliveryConfigured } from "@/lib/signal/client";
 import {
   buildAdminTurnout,
   buildAdminVoterRows
@@ -174,6 +175,7 @@ export default async function AdminPollPage({
           id: true,
           nick: true,
           email: true,
+          signalUsername: true,
           invites: {
             select: {
               status: true
@@ -270,6 +272,12 @@ export default async function AdminPollPage({
   });
   const emailDeliveryConfigured = Boolean(
     process.env.RESEND_API_KEY && process.env.RESEND_FROM_EMAIL
+  );
+  const signalDeliveryConfigured = isSignalDeliveryConfigured();
+  const deliveryConfiguredForRoster = poll.voterAccesses.every((access) =>
+    access.signalUsername
+      ? signalDeliveryConfigured
+      : Boolean(access.email && emailDeliveryConfigured)
   );
   const hasSentInvites = sentInviteCount > 0 || openedInviteCount > 0;
   const voterRows = buildAdminVoterRows(poll.voterAccesses, { resultsVisible });
@@ -369,14 +377,18 @@ export default async function AdminPollPage({
                 hasAnchor={Boolean(poll.anchorTxid)}
                 hasSentInvites={hasSentInvites}
                 disabled={
-                  !emailDeliveryConfigured || poll.status === "OPEN" || poll.status === "CLOSED"
+                  !deliveryConfiguredForRoster ||
+                  poll.status === "OPEN" ||
+                  poll.status === "CLOSED"
                 }
                 label={poll.status === "DRAFT" ? "Open poll" : "Retry opening"}
               />
-              {!emailDeliveryConfigured ? (
+              {!deliveryConfiguredForRoster ? (
                 <p className="error-notice">
-                  Configure <code>RESEND_API_KEY</code> and <code>RESEND_FROM_EMAIL</code>{" "}
-                  before opening this poll.
+                  Configure <code>SIGNAL_API_URL</code> and <code>SIGNAL_SENDER</code>{" "}
+                  for Signal voters, or keep <code>RESEND_API_KEY</code> and{" "}
+                  <code>RESEND_FROM_EMAIL</code> for legacy email rows, before opening
+                  this poll.
                 </p>
               ) : null}
               <div className="subtle-rule" />
@@ -602,7 +614,7 @@ export default async function AdminPollPage({
                   <thead>
                     <tr>
                       <th>Nick</th>
-                      <th>Email</th>
+                      <th>Delivery ID</th>
                       <th>Status</th>
                     </tr>
                   </thead>
@@ -610,7 +622,7 @@ export default async function AdminPollPage({
                     {voterRows.map((row) => (
                       <tr key={row.id}>
                         <td>{row.nick}</td>
-                        <td>{row.email}</td>
+                        <td>{row.deliveryTarget}</td>
                         <td>
                           <span className={`status-pill status-pill--${row.statusTone}`}>
                             {row.inviteStatus === "Vote received"

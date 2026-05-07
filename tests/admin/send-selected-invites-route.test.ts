@@ -70,7 +70,7 @@ describe("send-selected invites route", () => {
       totalEligible: 1,
       sent: 1,
       failed: 0,
-      skippedMissingEmail: 0
+      skippedMissingDelivery: 0
     });
 
     const response = await POST(
@@ -101,7 +101,7 @@ describe("send-selected invites route", () => {
       totalEligible: 1,
       sent: 1,
       failed: 0,
-      skippedMissingEmail: 0
+      skippedMissingDelivery: 0
     });
   });
 });

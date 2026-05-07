@@ -60,6 +60,11 @@ enum PollInviteStatus {
   FAILED
 }
 
+enum PollInviteDeliveryChannel {
+  EMAIL
+  SIGNAL
+}
+
 enum PollVoterAccessStatus {
   ACTIVE
   USED
@@ -206,7 +211,8 @@ model PollVoterAccess {
   id               String                @id @default(cuid())
   pollId           String
   nick             String
-  email            String
+  email            String?
+  signalUsername   String?
   passwordHash     String?
   status           PollVoterAccessStatus @default(ACTIVE)
   inviteToken      String                @unique
@@ -221,6 +227,7 @@ model PollVoterAccess {
 
   @@unique([pollId, nick])
   @@unique([pollId, email])
+  @@unique([pollId, signalUsername])
 }
 
 model PollInvite {
@@ -228,10 +235,13 @@ model PollInvite {
   pollId             String
   userId             String?
   pollVoterAccessId  String?
-  email              String
+  email              String?
+  signalUsername     String?
+  deliveryChannel    PollInviteDeliveryChannel @default(EMAIL)
   inviteToken        String            @unique
   status             PollInviteStatus  @default(PENDING)
   resendEmailId      String?
+  signalMessageId    String?
   sentAt             DateTime?
   openedAt           DateTime?
   lastError          String?

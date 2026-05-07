@@ -14,7 +14,7 @@ import {
 type DraftVoterRow = {
   id: string;
   nick: string;
-  email: string;
+  signalUsername: string;
 };
 
 type PreparedVoters = {
@@ -35,7 +35,7 @@ function createRow(): DraftVoterRow {
   return {
     id: generateRowId(),
     nick: "",
-    email: ""
+    signalUsername: ""
   };
 }
 
@@ -85,18 +85,18 @@ function prepareVoters(rows: DraftVoterRow[]): PreparedVoters {
 
   rows.forEach((row, index) => {
     const nick = row.nick.trim();
-    const email = row.email.trim().toLowerCase();
+    const signalUsername = row.signalUsername.trim().toLowerCase();
 
-    if (!nick && !email) {
+    if (!nick && !signalUsername) {
       return;
     }
 
-    if (!nick || !email) {
+    if (!nick || !signalUsername) {
       partialRowNumbers.push(index + 1);
       return;
     }
 
-    completeRows.push(`${nick},${email}`);
+    completeRows.push(`${nick},${signalUsername}`);
   });
 
   return {
@@ -112,12 +112,14 @@ function parseBulkVoters(input: string) {
     .map((line) => line.trim())
     .filter(Boolean)
     .map((line) => {
-      const [nick = "", email = ""] = line.split(",").map((value) => value.trim());
+      const [nick = "", signalUsername = ""] = line
+        .split(",")
+        .map((value) => value.trim());
 
       return {
         id: generateRowId(),
         nick,
-        email
+        signalUsername
       };
     });
 }
@@ -134,7 +136,7 @@ export function AdminPollCreateForm() {
   const opensAtIso = toUtcIsoDateTime(opensAtLocal);
   const closesAtIso = toUtcIsoDateTime(closesAtLocal);
 
-  function updateRow(id: string, field: "nick" | "email", value: string) {
+  function updateRow(id: string, field: "nick" | "signalUsername", value: string) {
     setRows((current) =>
       current.map((row) => (row.id === id ? { ...row, [field]: value } : row))
     );
@@ -167,13 +169,13 @@ export function AdminPollCreateForm() {
 
     if (preparedVoters.partialRowNumbers.length) {
       setError(
-        `Complete both nick and email for voter row${preparedVoters.partialRowNumbers.length === 1 ? "" : "s"} ${preparedVoters.partialRowNumbers.join(", ")}.`
+        `Complete both user ID and Signal username for voter row${preparedVoters.partialRowNumbers.length === 1 ? "" : "s"} ${preparedVoters.partialRowNumbers.join(", ")}.`
       );
       return;
     }
 
     if (preparedVoters.completeCount === 0) {
-      setError("Add at least one voter with both nick and email.");
+      setError("Add at least one voter with both user ID and Signal username.");
       return;
     }
 
@@ -285,14 +287,15 @@ export function AdminPollCreateForm() {
           <h3>Build the initial delivery list</h3>
         </div>
         <p className="field-hint">
-          Required: at least one complete voter row. Blank rows are ignored.
+          Required: at least one complete voter row. Use Signal usernames only,
+          including the numeric suffix. Phone numbers are not accepted.
         </p>
         <div className="editorial-table-wrap">
           <table className="editorial-table">
             <thead>
               <tr>
-                <th>Nick</th>
-                <th>Email</th>
+                <th>User ID</th>
+                <th>Signal username</th>
                 <th className="editorial-table-actions">Actions</th>
               </tr>
             </thead>
@@ -315,14 +318,13 @@ export function AdminPollCreateForm() {
                   </td>
                   <td>
                     <input
-                      name={`voter-email-${row.id}`}
-                      aria-label={`Voter email ${index + 1}`}
-                      value={row.email}
+                      name={`voter-signal-${row.id}`}
+                      aria-label={`Voter Signal username ${index + 1}`}
+                      value={row.signalUsername}
                       onChange={(event) =>
-                        updateRow(row.id, "email", event.currentTarget.value)
+                        updateRow(row.id, "signalUsername", event.currentTarget.value)
                       }
-                      placeholder="voter@example.com"
-                      type="email"
+                      placeholder="username.42"
                       autoComplete="off"
                       data-lpignore="true"
                       data-1p-ignore="true"
@@ -354,7 +356,7 @@ export function AdminPollCreateForm() {
             <textarea
               value={bulkInput}
               onChange={(event) => setBulkInput(event.currentTarget.value)}
-              placeholder={"voter01,voter01@example.com\nvoter02,voter02@example.com"}
+              placeholder={"voter01,username.42\nvoter02,another_user.99"}
               autoComplete="off"
               data-lpignore="true"
               data-1p-ignore="true"

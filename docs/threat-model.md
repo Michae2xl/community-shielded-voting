@@ -29,6 +29,6 @@ Compromise of app secrets, database credentials, or collector RPC credentials ca
 
 - public board uses reconciled results only
 - duplicate protection is applied before public display
-- invite-opened state is tied to successful login rather than raw link open
+- temporary voter invites use one-time links that create the poll session without sending a password
 - browser write routes require a trusted same-origin request
 - deploy no longer seeds predictable credentials automatically

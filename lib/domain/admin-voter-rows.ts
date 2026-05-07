@@ -9,7 +9,8 @@ type AdminTurnoutAccessInput = {
 type AdminVoterAccessInput = AdminTurnoutAccessInput & {
   id: string;
   nick: string;
-  email: string;
+  email?: string | null;
+  signalUsername?: string | null;
   invites: Array<{
     status: string;
   }>;
@@ -23,7 +24,9 @@ type AdminVoterAccessInput = AdminTurnoutAccessInput & {
 export type AdminVoterRow = {
   id: string;
   nick: string;
-  email: string;
+  email?: string | null;
+  signalUsername?: string | null;
+  deliveryTarget: string;
   inviteStatus: string;
   statusTone: "neutral" | "success" | "warning";
   canRemove: boolean;
@@ -98,6 +101,8 @@ export function buildAdminVoterRows(
       id: access.id,
       nick: access.nick,
       email: access.email,
+      signalUsername: access.signalUsername,
+      deliveryTarget: access.signalUsername ?? access.email ?? "No delivery ID",
       inviteStatus,
       statusTone,
       canRemove,

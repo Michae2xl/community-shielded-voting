@@ -70,7 +70,7 @@ describe("admin send invites route", () => {
       totalEligible: 3,
       sent: 2,
       failed: 0,
-      skippedMissingEmail: 1
+      skippedMissingDelivery: 1
     });
 
     const response = await POST(
@@ -88,7 +88,7 @@ describe("admin send invites route", () => {
       totalEligible: 3,
       sent: 2,
       failed: 0,
-      skippedMissingEmail: 1
+      skippedMissingDelivery: 1
     });
     expect(sendPollInvitesMock).toHaveBeenCalledWith({
       pollId: "poll_1",

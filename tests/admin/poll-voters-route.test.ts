@@ -59,7 +59,7 @@ describe("admin poll voter routes", () => {
       {
         id: "access_1",
         nick: "michae2xl",
-        email: "michaelguima@proton.me"
+        signalUsername: "michae2xl.42"
       }
     ]);
 
@@ -71,7 +71,7 @@ describe("admin poll voter routes", () => {
           origin: "http://localhost"
         },
         body: JSON.stringify({
-          voters: [{ nick: "michae2xl", email: "michaelguima@proton.me" }]
+          voters: [{ nick: "michae2xl", signalUsername: "michae2xl.42" }]
         })
       }) as never,
       { params: Promise.resolve({ pollId: "poll_1" }) }
@@ -79,7 +79,7 @@ describe("admin poll voter routes", () => {
 
     expect(createPollVoterAccessesMock).toHaveBeenCalledWith({
       pollId: "poll_1",
-      voters: [{ nick: "michae2xl", email: "michaelguima@proton.me" }]
+      voters: [{ nick: "michae2xl", signalUsername: "michae2xl.42" }]
     });
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
@@ -87,7 +87,7 @@ describe("admin poll voter routes", () => {
         {
           id: "access_1",
           nick: "michae2xl",
-          email: "michaelguima@proton.me"
+          signalUsername: "michae2xl.42"
         }
       ]
     });

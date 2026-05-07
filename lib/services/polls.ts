@@ -5,6 +5,7 @@ import { generateInviteToken } from "@/lib/domain/invites";
 import { getDefaultPollFeeZat } from "@/lib/config/polls";
 import { db } from "@/lib/db";
 import { normalizeOptionLabel } from "@/lib/domain/options";
+import { signalUsernameSchema } from "@/lib/domain/signal";
 import {
   DEFAULT_PASSING_THRESHOLD_PERCENT,
   DEFAULT_QUORUM_PERCENT,
@@ -27,7 +28,7 @@ export class PollServiceError extends Error {
 
 export const pollVoterInputSchema = z.object({
   nick: z.string().trim().min(1),
-  email: z.string().trim().email().transform((value) => value.toLowerCase())
+  signalUsername: signalUsernameSchema
 });
 
 export const createDraftPollInputSchema = z
@@ -61,10 +62,13 @@ export const createDraftPollInputSchema = z
     }
 
     const seenNicks = new Set<string>();
-    const seenEmails = new Set<string>();
+    const seenSignalUsernames = new Set<string>();
 
     value.voters.forEach((voter, index) => {
-      if (seenNicks.has(voter.nick) || seenEmails.has(voter.email)) {
+      if (
+        seenNicks.has(voter.nick) ||
+        seenSignalUsernames.has(voter.signalUsername)
+      ) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["voters", index],
@@ -74,7 +78,7 @@ export const createDraftPollInputSchema = z
       }
 
       seenNicks.add(voter.nick);
-      seenEmails.add(voter.email);
+      seenSignalUsernames.add(voter.signalUsername);
     });
 
     if (normalizeOptionLabel(value.optionDLabel) || normalizeOptionLabel(value.optionELabel)) {
@@ -137,7 +141,7 @@ export async function createDraftPoll(
       voterAccesses: {
         create: parsed.voters.map((voter) => ({
           nick: voter.nick,
-          email: voter.email,
+          signalUsername: voter.signalUsername,
           inviteToken: generateInviteToken(),
           expiresAt: new Date(parsed.closesAt)
         }))

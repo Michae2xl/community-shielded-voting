@@ -3,7 +3,7 @@ import { ZcashBrandmark } from "@/components/zcash-brandmark";
 
 function mapErrorMessage(error: string | undefined) {
   if (error === "1") {
-    return "Login failed. Check your user ID or temporary voter credentials and password.";
+    return "Login failed. Check your user ID and password, or reopen your one-time invite link.";
   }
 
   if (error === "service_unavailable") {
@@ -40,8 +40,8 @@ export default async function LoginPage({
             </div>
             <h1 className="portal-subheading">Sign in</h1>
             <p className="lead">
-              Use your admin credentials or the temporary voter credentials from
-              your invite email to enter the portal.
+              Use your admin credentials to enter the portal. Voters should open
+              their one-time invite link instead of typing a password.
             </p>
           </div>
           {errorMessage ? <p className="error-notice">{errorMessage}</p> : null}

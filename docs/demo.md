@@ -14,8 +14,8 @@
 - show the visible opening stages
 
 ### 3. Voter flow
-- receive invite
-- sign in with poll-scoped credentials
+- receive Signal invite
+- open the one-time poll link to create the poll session
 - choose one answer
 - confirm and lock the ticket
 - show the single QR
