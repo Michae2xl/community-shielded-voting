@@ -313,6 +313,49 @@ describe("voter poll visibility", () => {
     expect(screen.getByText("OPEN")).toHaveClass("poll-summary-status");
   });
 
+  it("renders live governance progress before the poll closes", async () => {
+    readSessionMock.mockResolvedValue(null);
+    pollFindManyMock.mockResolvedValue([
+      {
+        id: "poll_live",
+        question: "Live governance poll",
+        status: "OPEN",
+        voteModel: "SINGLE_CHOICE",
+        quorumPercent: 40,
+        passingThresholdPercent: 67,
+        optionALabel: "Confirm",
+        optionBLabel: "Reject",
+        optionCLabel: "Abstain",
+        optionDLabel: null,
+        optionELabel: null,
+        tally: {
+          totalConfirmed: 1,
+          countA: 0,
+          countB: 0,
+          countC: 1,
+          countD: 0,
+          countE: 0
+        },
+        _count: {
+          eligibility: 0,
+          voterAccesses: 3
+        }
+      }
+    ]);
+
+    render(await PollsPage());
+
+    expect(screen.getByText("Live governance poll")).toBeInTheDocument();
+    expect(screen.getByText("Live poll")).toBeInTheDocument();
+    expect(screen.getByText("Turnout")).toBeInTheDocument();
+    expect(screen.getByText("33%")).toBeInTheDocument();
+    expect(screen.getByText("1/3 voted")).toBeInTheDocument();
+    expect(screen.getByText("Quorum 40%")).toBeInTheDocument();
+    expect(screen.getByText("Decision")).toBeInTheDocument();
+    expect(screen.getByText("Pending")).toBeInTheDocument();
+    expect(screen.getByText(/Approval 0% \/ 67%/)).toBeInTheDocument();
+  });
+
   it("renders newest polls first on the public board", async () => {
     readSessionMock.mockResolvedValue(null);
     pollFindManyMock.mockResolvedValue([

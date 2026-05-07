@@ -169,7 +169,7 @@ export default async function PollsPage() {
                 )._count;
                 const eligibleTotal = (count?.eligibility ?? 0) + (count?.voterAccesses ?? 0);
                 const turnout = formatTurnout(tally.totalConfirmed, eligibleTotal);
-                const showTurnout = isClosedPoll(poll.status) && eligibleTotal > 0;
+                const showGovernanceSummary = eligibleTotal > 0;
                 const outcome = calculateSingleChoiceOutcome({
                   isClosed: isClosedPoll(poll.status),
                   totalEligible: eligibleTotal,
@@ -191,7 +191,6 @@ export default async function PollsPage() {
                     }
                   ).passingThresholdPercent
                 });
-                const showOutcome = showTurnout && outcome.outcome !== "PENDING";
 
                 return (
                   <article key={poll.id} className="poll-summary-card">
@@ -235,7 +234,7 @@ export default async function PollsPage() {
                     <p className="poll-summary-total">
                       {formatVoteCount(tally.totalConfirmed)}
                     </p>
-                    {showTurnout ? (
+                    {showGovernanceSummary ? (
                       <div className="poll-summary-turnout" aria-label="Turnout">
                         <span>Turnout</span>
                         <strong>{turnout.percent}</strong>
@@ -243,7 +242,7 @@ export default async function PollsPage() {
                         <span>Quorum {outcome.quorumPercent}%</span>
                       </div>
                     ) : null}
-                    {showOutcome ? (
+                    {showGovernanceSummary ? (
                       <div className="poll-summary-decision" aria-label="Governance outcome">
                         <span>Decision</span>
                         <strong>{presentGovernanceOutcome(outcome.outcome)}</strong>
