@@ -194,6 +194,9 @@ model VoteReceipt {
   receiptEmailId  String?
   receiptEmailSentAt DateTime?
   receiptEmailError String?
+  receiptSignalMessageId String?
+  receiptSignalSentAt DateTime?
+  receiptSignalError String?
   optionLetter    VoteOptionLetter
   txid            String
   blockHeight     Int?

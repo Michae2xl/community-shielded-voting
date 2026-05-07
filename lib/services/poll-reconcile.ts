@@ -10,7 +10,7 @@ import {
   syncObservedVoteAuditEvents
 } from "@/lib/services/public-audit-events";
 import { reconcileReceipt } from "@/lib/services/reconcile";
-import { deliverConfirmedVoteReceiptEmailsForPoll } from "@/lib/services/vote-receipts";
+import { deliverConfirmedVoteReceiptsForPoll } from "@/lib/services/vote-receipts";
 import { getZkoolClient } from "@/lib/zcash/zkool-client";
 
 function isUniqueConstraintError(error: unknown) {
@@ -220,9 +220,9 @@ export async function reconcilePollVotes(pollId: string) {
   }
 
   try {
-    await deliverConfirmedVoteReceiptEmailsForPoll(pollId);
+    await deliverConfirmedVoteReceiptsForPoll(pollId);
   } catch (error) {
-    console.error("Failed to deliver confirmed vote receipt emails", {
+    console.error("Failed to deliver confirmed vote receipts", {
       pollId,
       error
     });

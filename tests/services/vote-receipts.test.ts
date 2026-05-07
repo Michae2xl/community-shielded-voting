@@ -15,6 +15,11 @@ const { sendVoteReceiptEmailMock, isEmailDeliveryConfiguredMock } = vi.hoisted((
   isEmailDeliveryConfiguredMock: vi.fn()
 }));
 
+const { sendSignalMessageMock, isSignalDeliveryConfiguredMock } = vi.hoisted(() => ({
+  sendSignalMessageMock: vi.fn(),
+  isSignalDeliveryConfiguredMock: vi.fn()
+}));
+
 vi.mock("@/lib/db", () => ({
   db: {
     voteReceipt: {
@@ -32,7 +37,16 @@ vi.mock("@/lib/email/resend", () => ({
   isEmailDeliveryConfigured: isEmailDeliveryConfiguredMock
 }));
 
-import { deliverConfirmedVoteReceiptEmailsForPoll } from "@/lib/services/vote-receipts";
+vi.mock("@/lib/signal/client", () => ({
+  sendSignalMessage: sendSignalMessageMock,
+  isSignalDeliveryConfigured: isSignalDeliveryConfiguredMock
+}));
+
+import {
+  deliverConfirmedVoteReceiptEmailsForPoll,
+  deliverConfirmedVoteReceiptSignalsForPoll,
+  deliverConfirmedVoteReceiptsForPoll
+} from "@/lib/services/vote-receipts";
 
 describe("deliverConfirmedVoteReceiptEmailsForPoll", () => {
   beforeEach(() => {
@@ -42,7 +56,10 @@ describe("deliverConfirmedVoteReceiptEmailsForPoll", () => {
     updateVoteReceiptMock.mockReset();
     sendVoteReceiptEmailMock.mockReset();
     isEmailDeliveryConfiguredMock.mockReset();
+    sendSignalMessageMock.mockReset();
+    isSignalDeliveryConfiguredMock.mockReset();
     isEmailDeliveryConfiguredMock.mockReturnValue(true);
+    isSignalDeliveryConfiguredMock.mockReturnValue(true);
   });
 
   it("emails confirmed receipts to the temporary voter and marks them as sent", async () => {
@@ -190,5 +207,118 @@ describe("deliverConfirmedVoteReceiptEmailsForPoll", () => {
       failed: 0
     });
     expect(findManyVoteReceiptsMock).not.toHaveBeenCalled();
+  });
+
+  it("sends confirmed receipts to Signal voters without exposing the answer", async () => {
+    findManyVoteReceiptsMock.mockResolvedValue([
+      {
+        id: "receipt_row_1",
+        pollId: "poll_1",
+        ticketHash: "ticket_hash_1",
+        receiptPublicId: "receipt_public_1",
+        txid: "txid_1",
+        confirmedAt: new Date("2026-04-21T03:00:00.000Z"),
+        poll: {
+          question: "Which path should we approve?"
+        }
+      }
+    ]);
+    findUniqueVoteTicketMock.mockResolvedValue({
+      assignment: {
+        pollVoterAccess: {
+          nick: "michae2xl",
+          signalUsername: "michae2xl.42"
+        }
+      }
+    });
+    sendSignalMessageMock.mockResolvedValue({
+      id: "signal_1"
+    });
+
+    const result = await deliverConfirmedVoteReceiptSignalsForPoll("poll_1");
+
+    expect(result).toEqual({
+      sent: 1,
+      skipped: 0,
+      failed: 0
+    });
+    expect(sendSignalMessageMock).toHaveBeenCalledWith({
+      to: "michae2xl.42",
+      message: expect.stringContaining("Vote confirmed")
+    });
+    expect(sendSignalMessageMock.mock.calls[0][0].message).not.toMatch(
+      /Option|choice|answer/i
+    );
+    expect(updateVoteReceiptMock).toHaveBeenCalledWith({
+      where: {
+        id: "receipt_row_1"
+      },
+      data: expect.objectContaining({
+        receiptSignalMessageId: "signal_1",
+        receiptSignalSentAt: expect.any(Date),
+        receiptSignalError: null
+      })
+    });
+  });
+
+  it("records Signal receipt delivery failures without aborting", async () => {
+    findManyVoteReceiptsMock.mockResolvedValue([
+      {
+        id: "receipt_row_1",
+        pollId: "poll_1",
+        ticketHash: "ticket_hash_1",
+        receiptPublicId: "receipt_public_1",
+        txid: "txid_1",
+        confirmedAt: new Date("2026-04-21T03:00:00.000Z"),
+        poll: {
+          question: "Which path should we approve?"
+        }
+      }
+    ]);
+    findUniqueVoteTicketMock.mockResolvedValue({
+      assignment: {
+        pollVoterAccess: {
+          nick: "michae2xl",
+          signalUsername: "michae2xl.42"
+        }
+      }
+    });
+    sendSignalMessageMock.mockRejectedValue(new Error("signal failed"));
+
+    const result = await deliverConfirmedVoteReceiptSignalsForPoll("poll_1");
+
+    expect(result).toEqual({
+      sent: 0,
+      skipped: 0,
+      failed: 1
+    });
+    expect(updateVoteReceiptMock).toHaveBeenCalledWith({
+      where: {
+        id: "receipt_row_1"
+      },
+      data: {
+        receiptSignalError: "signal failed"
+      }
+    });
+  });
+
+  it("delivers both email and Signal receipt channels", async () => {
+    findManyVoteReceiptsMock.mockResolvedValue([]);
+
+    const result = await deliverConfirmedVoteReceiptsForPoll("poll_1");
+
+    expect(result).toEqual({
+      email: {
+        sent: 0,
+        skipped: 0,
+        failed: 0
+      },
+      signal: {
+        sent: 0,
+        skipped: 0,
+        failed: 0
+      }
+    });
+    expect(findManyVoteReceiptsMock).toHaveBeenCalledTimes(2);
   });
 });
