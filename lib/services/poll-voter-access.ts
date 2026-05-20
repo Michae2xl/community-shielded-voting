@@ -5,13 +5,13 @@ import { db } from "@/lib/db";
 import { generateInviteToken } from "@/lib/domain/invites";
 import { normalizeSignalUsername } from "@/lib/domain/signal";
 
-const PASSWORD_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const HUMAN_ID_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const PASSWORD_GROUP_SIZE = 4;
 const PASSWORD_GROUP_COUNT = 3;
 
 function buildTemporaryPassword() {
   const raw = randomBytes(PASSWORD_GROUP_SIZE * PASSWORD_GROUP_COUNT);
-  const chars = Array.from(raw, (byte) => PASSWORD_ALPHABET[byte % PASSWORD_ALPHABET.length]);
+  const chars = Array.from(raw, (byte) => HUMAN_ID_ALPHABET[byte % HUMAN_ID_ALPHABET.length]);
 
   const groups = [];
 
