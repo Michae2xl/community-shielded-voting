@@ -188,6 +188,22 @@ describe("ZkoolClient", () => {
             account_uuid: "account-uuid-1",
             valueZat: 30000,
             memoStr: null
+          },
+          {
+            txid: "txid_hex_memo",
+            address: "u1votec",
+            confirmations: 2,
+            account_uuid: "account-uuid-1",
+            valueZat: 30000,
+            memo: "f443000000"
+          },
+          {
+            txid: "txid_internal_without_address",
+            confirmations: 2,
+            account_uuid: "account-uuid-1",
+            valueZat: 30000,
+            memo: "f444000000",
+            walletInternal: true
           }
         ],
         error: null
@@ -202,6 +218,13 @@ describe("ZkoolClient", () => {
         txid: "txid_1",
         amountZat: 10000n,
         memo: "A",
+        blockHeight: null
+      },
+      {
+        shieldedAddress: "u1votec",
+        txid: "txid_hex_memo",
+        amountZat: 30000n,
+        memo: "C",
         blockHeight: null
       }
     ]);

@@ -79,6 +79,30 @@ function zecDecimalToZat(value: string | number) {
   return BigInt(whole) * 100000000n + BigInt(paddedFractional || "0");
 }
 
+function decodeZalletTextMemoHex(value?: string | null) {
+  if (!value || !/^[0-9a-f]+$/i.test(value) || value.length % 2 !== 0) {
+    return null;
+  }
+
+  const bytes = Buffer.from(value, "hex");
+
+  if (bytes[0] !== 0xf4) {
+    return null;
+  }
+
+  let end = bytes.length;
+  while (end > 1 && bytes[end - 1] === 0) {
+    end -= 1;
+  }
+
+  const text = bytes.subarray(1, end).toString("utf8");
+  return text.length ? text : null;
+}
+
+function readZalletMemo(note: { memo?: string | null; memoStr?: string | null }) {
+  return note.memoStr ?? decodeZalletTextMemoHex(note.memo);
+}
+
 export class ZkoolClient {
   isConfigured() {
     return readConfig() !== null || readZalletCollectorConfig() !== null;
@@ -262,29 +286,37 @@ export class ZkoolClient {
           account_uuid?: string;
           valueZat?: number | string;
           value?: number | string;
+          memo?: string | null;
           memoStr?: string | null;
         }>
       >("z_listunspent", [minConfirmations, 9999999, true]);
 
-      return notes
-        .filter(
-          (note) =>
-            note.account_uuid === zalletConfig.collectorAccount &&
-            Boolean(note.address) &&
-            Boolean(note.memoStr) &&
-            typeof note.confirmations === "number" &&
-            note.confirmations >= minConfirmations
-        )
-        .map((note) => ({
-          shieldedAddress: note.address!,
-          txid: note.txid,
-          amountZat:
-            note.valueZat !== undefined
-              ? BigInt(note.valueZat)
-              : zecDecimalToZat(note.value ?? 0),
-          memo: note.memoStr!,
-          blockHeight: null
-        }));
+      return notes.flatMap((note) => {
+        const memo = readZalletMemo(note);
+
+        if (
+          note.account_uuid !== zalletConfig.collectorAccount ||
+          !note.address ||
+          !memo ||
+          typeof note.confirmations !== "number" ||
+          note.confirmations < minConfirmations
+        ) {
+          return [];
+        }
+
+        return [
+          {
+            shieldedAddress: note.address,
+            txid: note.txid,
+            amountZat:
+              note.valueZat !== undefined
+                ? BigInt(note.valueZat)
+                : zecDecimalToZat(note.value ?? 0),
+            memo,
+            blockHeight: null
+          }
+        ];
+      });
     }
 
     const { collectorAccountId } = this.requireConfig();
